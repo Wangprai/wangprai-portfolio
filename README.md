@@ -1,6 +1,6 @@
 # Wangprai Portfolio
 
-[![Website](https://img.shields.io/badge/Website-Live-blue?style=for-the-badge)]([YOUR_DEPLOYED_URL])
+[![Website](https://img.shields.io/badge/Website-Live-blue?style=for-the-badge)](https://wangprai-portfolio.vercel.app/)
 [![GitHub](https://img.shields.io/badge/GitHub-Source-black?style=for-the-badge)](https://github.com/Wangprai)
 
 ## Overview
@@ -71,8 +71,8 @@ src/
 ### Installation
 
 ```bash
-git clone YOUR_REPO_URL
-cd YOUR_PROJECT_FOLDER
+git clone https://github.com/Wangprai/wangprai-portfolio.git
+cd wangprai-portfolio
 npm install
 ```
 
