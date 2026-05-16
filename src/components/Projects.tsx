@@ -1,4 +1,5 @@
-import { FaExternalLinkAlt, FaGithub } from "react-icons/fa";
+// import { FaExternalLinkAlt } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa";
 import { SiHuggingface } from "react-icons/si";
 import { usePersonalData } from "../hooks/usePersonalData";
 

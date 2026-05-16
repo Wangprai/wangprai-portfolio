@@ -1,7 +1,7 @@
-# [Your Portfolio Website Name]
+# Wangprai Portfolio
 
 [![Website](https://img.shields.io/badge/Website-Live-blue?style=for-the-badge)]([YOUR_DEPLOYED_URL])
-[![GitHub](https://img.shields.io/badge/GitHub-Source-black?style=for-the-badge)]([YOUR_GITHUB_REPO_URL])
+[![GitHub](https://img.shields.io/badge/GitHub-Source-black?style=for-the-badge)](https://github.com/Wangprai)
 
 ## Overview
 
@@ -40,10 +40,10 @@ It is designed to be responsive, easy to navigate, and suitable for showcasing m
 src/
 ├── assets/        # Images, icons, and static files
 ├── components/    # Reusable UI components
-├── data/          # Personal data / content
+├── docs/          # Resume / document
 ├── hooks/         # Custom hooks
 ├── pages/         # Page sections or routes
-├── index.tsx       # Global styles
+├── index.tsx      # Global styles
 └── App.tsx        # Main app file
 ```
 
@@ -53,11 +53,10 @@ src/
 
 - Hero
 - About Me
+- Education
+- Experience
 - Skills
 - Projects
-- Experience
-- Education
-- Certificates
 - Contact
 
 ---
@@ -88,3 +87,24 @@ npm run dev
 ```bash
 npm run build
 ```
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+---
+
+## Deployment
+
+This project is deployed using Vercel.
+
+### Deployment Steps
+
+1. Push the code to GitHub  
+2. Connect the repository to Vercel  
+3. Configure build settings if needed  
+4. Deploy the project  
+
+---
