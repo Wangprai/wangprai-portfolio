@@ -35,7 +35,7 @@ const Navbar = () => {
             </a>
           ))}
           <a
-            href="\src\docs\Wangprai_Resume-SE.pdf"
+            href="\docs\Wangprai_Resume-SE.pdf"
             className="text-sm border border-primary text-primary px-4 py-2 rounded-md hover:bg-primary/10 transition-colors duration-200"
           >
             {t.nav.resume}
