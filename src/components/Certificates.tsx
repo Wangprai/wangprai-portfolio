@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Award, Calendar } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import ScrollReveal from "./motion/ScrollReveal";
@@ -19,23 +20,32 @@ const Certificates = () => {
 
         <div className="grid md:grid-cols-2 gap-5">
           {t.certificates.items.map((cert, index) => (
-            <ScrollReveal key={cert.name} delayMs={index * 70}>
-              <article className="h-full glass-card p-6 sm:p-7 hover:border-primary/45 transition-colors duration-300 flex items-start gap-4">
-                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-primary/12 border border-primary/30 text-primary shrink-0 mt-0.5">
+            <ScrollReveal key={cert.name} delayMs={index * 80} variant="scale">
+              <article className="group glare-hover h-full glass-card p-6 sm:p-7 hover:border-primary/45 hover:-translate-y-0.5 transition-[border-color,transform] duration-300 flex items-start gap-4">
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-primary/12 border border-primary/30 text-primary shrink-0 mt-0.5 transition-[transform,background-color,color] duration-300 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground">
                   <Award size={20} aria-hidden="true" />
                 </div>
 
                 <div className="min-w-0 flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div
+                    className="reveal-item flex flex-wrap items-center justify-between gap-2"
+                    style={{ "--i": 0, "--base": "100ms" } as CSSProperties}
+                  >
                     <span className="inline-flex items-center gap-1.5 font-mono text-xs text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
                       <Calendar size={12} aria-hidden="true" />
                       {cert.date}
                     </span>
                   </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground leading-snug">
+                  <h3
+                    className="reveal-item text-base sm:text-lg font-semibold text-foreground leading-snug group-hover:text-primary transition-colors"
+                    style={{ "--i": 1, "--base": "100ms" } as CSSProperties}
+                  >
                     {cert.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p
+                    className="reveal-item text-sm text-muted-foreground leading-relaxed"
+                    style={{ "--i": 2, "--base": "100ms" } as CSSProperties}
+                  >
                     {cert.issuer}
                   </p>
                 </div>

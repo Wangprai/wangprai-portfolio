@@ -1,15 +1,37 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+/**
+ * Viewport reveal wrapper (dependency-free adaptation of React Bits
+ * "Animated Content" / "Fade Content").
+ *
+ * - `variant` picks the entrance style for the wrapper itself.
+ * - Descendants with `.reveal-item` (and an optional `--i` index) stagger in
+ *   once the wrapper is revealed; `.reveal-line` / `.reveal-line-y` draw in.
+ * - Reduced-motion users and browsers without IntersectionObserver get the
+ *   final state immediately.
+ */
+export type RevealVariant = "up" | "blur" | "scale" | "left" | "right";
+
 interface ScrollRevealProps {
   children: ReactNode;
   className?: string;
   delayMs?: number;
+  variant?: RevealVariant;
 }
+
+const HIDDEN: Record<RevealVariant, string> = {
+  up: "opacity-0 translate-y-4",
+  blur: "opacity-0 translate-y-2 blur-[6px]",
+  scale: "opacity-0 scale-[0.96]",
+  left: "opacity-0 -translate-x-5",
+  right: "opacity-0 translate-x-5",
+};
 
 const ScrollReveal = ({
   children,
   className = "",
   delayMs = 0,
+  variant = "up",
 }: ScrollRevealProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<boolean>(() => {
@@ -40,8 +62,9 @@ const ScrollReveal = ({
   return (
     <div
       ref={ref}
-      className={`transition-[opacity,transform] duration-500 ease-out will-change-[opacity,transform] ${
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      data-reveal={visible ? "shown" : "hidden"}
+      className={`transition-[opacity,translate,scale,filter] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        visible ? "opacity-100" : `${HIDDEN[variant]} will-change-[opacity,translate]`
       }${className ? ` ${className}` : ""}`}
       style={delayMs > 0 ? { transitionDelay: `${delayMs}ms` } : undefined}
     >

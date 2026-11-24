@@ -89,7 +89,7 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
         aria-modal="true"
         aria-labelledby="project-modal-title"
         onClick={(event) => event.stopPropagation()}
-        className="relative w-full max-w-xl max-h-[88svh] overflow-y-auto rounded-2xl border border-primary/35 bg-card text-card-foreground shadow-2xl shadow-black/45 p-6 sm:p-7 animate-fade-in-up"
+        className="relative w-full max-w-xl max-h-[88svh] overflow-y-auto rounded-2xl border border-primary/35 bg-card text-card-foreground shadow-2xl shadow-black/45 p-6 sm:p-7 animate-modal-in"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 pb-5 mb-5 border-b border-border/80">
@@ -110,9 +110,13 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
             type="button"
             onClick={onClose}
             aria-label={t.projects.closeModal}
-            className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-secondary/60 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors shrink-0 cursor-pointer"
+            className="group/close inline-flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-secondary/60 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors shrink-0 cursor-pointer"
           >
-            <X size={18} aria-hidden="true" />
+            <X
+              size={18}
+              aria-hidden="true"
+              className="transition-transform duration-200 group-hover/close:rotate-90"
+            />
           </button>
         </div>
 

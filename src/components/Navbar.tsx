@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, Globe, Menu, Moon, Sun, X } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import { useTheme } from "../hooks/useTheme";
@@ -17,6 +17,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
+  const progressRef = useRef<HTMLDivElement>(null);
   const { lang, t, toggleLang } = usePersonalData();
   const { theme, toggleTheme } = useTheme();
 
@@ -36,11 +37,20 @@ const Navbar = () => {
       if (window.scrollY < 140) {
         setActiveSection("");
       }
+      if (progressRef.current) {
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
+        progressRef.current.style.transform = `scaleX(${progress.toFixed(4)})`;
+      }
     };
 
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -116,13 +126,21 @@ const Navbar = () => {
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "location" : undefined}
-                className={`relative px-2.5 xl:px-3 py-2 text-[13px] xl:text-sm font-medium rounded-lg whitespace-nowrap transition-colors duration-200 ${
+                className={`group/nav relative px-2.5 xl:px-3 py-2 text-[13px] xl:text-sm font-medium rounded-lg whitespace-nowrap transition-colors duration-200 ${
                   isActive
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                 }`}
               >
                 {item.label}
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute inset-x-3 bottom-1 h-0.5 rounded-full bg-primary transition-transform duration-300 ease-out origin-center ${
+                    isActive
+                      ? "scale-x-100 opacity-100"
+                      : "scale-x-0 opacity-0 group-hover/nav:scale-x-75 group-hover/nav:opacity-50"
+                  }`}
+                />
               </a>
             );
           })}
@@ -137,11 +155,13 @@ const Navbar = () => {
             title={themeAriaLabel}
             className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border/80 bg-card/60 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors cursor-pointer"
           >
-            {theme === "dark" ? (
-              <Sun size={16} aria-hidden="true" />
-            ) : (
-              <Moon size={16} aria-hidden="true" />
-            )}
+            <span key={theme} className="inline-flex animate-icon-swap">
+              {theme === "dark" ? (
+                <Sun size={16} aria-hidden="true" />
+              ) : (
+                <Moon size={16} aria-hidden="true" />
+              )}
+            </span>
           </button>
 
           <button
@@ -149,19 +169,27 @@ const Navbar = () => {
             onClick={toggleLang}
             aria-label={t.nav.switchLangLabel}
             title={t.nav.switchLangLabel}
-            className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-border/80 bg-card/60 font-mono text-xs font-medium text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors cursor-pointer"
+            className="group/lang inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-border/80 bg-card/60 font-mono text-xs font-medium text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors cursor-pointer"
           >
-            <Globe size={14} aria-hidden="true" />
-            <span>{lang === "en" ? "TH" : "EN"}</span>
+            <Globe
+              size={14}
+              aria-hidden="true"
+              className="transition-transform duration-300 group-hover/lang:rotate-12"
+            />
+            <span>{lang === "en" ? "EN" : "TH"}</span>
           </button>
 
           <a
             href="/docs/Wangprai_Resume-SE.pdf"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-primary/60 bg-primary/10 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap"
+            className="group/res inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-primary/60 bg-primary/10 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap"
           >
-            <FileText size={14} aria-hidden="true" />
+            <FileText
+              size={14}
+              aria-hidden="true"
+              className="transition-transform duration-200 group-hover/res:-translate-y-0.5"
+            />
             <span>{t.nav.resume}</span>
           </a>
         </div>
@@ -174,11 +202,13 @@ const Navbar = () => {
             aria-label={themeAriaLabel}
             className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-border/80 bg-card/60 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
           >
-            {theme === "dark" ? (
-              <Sun size={17} aria-hidden="true" />
-            ) : (
-              <Moon size={17} aria-hidden="true" />
-            )}
+            <span key={theme} className="inline-flex animate-icon-swap">
+              {theme === "dark" ? (
+                <Sun size={17} aria-hidden="true" />
+              ) : (
+                <Moon size={17} aria-hidden="true" />
+              )}
+            </span>
           </button>
 
           <button
@@ -199,20 +229,34 @@ const Navbar = () => {
             onClick={() => setIsOpen((prev) => !prev)}
             className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-border/80 bg-card/60 text-foreground hover:text-primary transition-colors cursor-pointer"
           >
-            {isOpen ? (
-              <X size={20} aria-hidden="true" />
-            ) : (
-              <Menu size={20} aria-hidden="true" />
-            )}
+            <span key={isOpen ? "open" : "closed"} className="inline-flex animate-icon-swap">
+              {isOpen ? (
+                <X size={20} aria-hidden="true" />
+              ) : (
+                <Menu size={20} aria-hidden="true" />
+              )}
+            </span>
           </button>
         </div>
       </nav>
+
+      {/* Scroll reading progress bar */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] overflow-hidden"
+      >
+        <div
+          ref={progressRef}
+          className="h-full w-full origin-left bg-gradient-to-r from-primary via-accent to-primary/80 will-change-transform"
+          style={{ transform: "scaleX(0)" }}
+        />
+      </div>
 
       {/* Mobile navigation drawer */}
       {isOpen && (
         <div
           id="mobile-nav-menu"
-          className="lg:hidden bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-xl"
+          className="lg:hidden bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-xl animate-menu-in"
         >
           <ul className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-1.5">
             {navItems.map((item) => {

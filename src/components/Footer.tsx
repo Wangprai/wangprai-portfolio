@@ -76,10 +76,14 @@ const Footer = () => {
             type="button"
             onClick={handleBackToTop}
             aria-label={t.footer.backToTop}
-            className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-card/70 px-4 py-2.5 font-mono text-xs font-medium text-muted-foreground hover:text-primary hover:border-primary/50 hover:-translate-y-0.5 transition-all cursor-pointer"
+            className="group inline-flex items-center gap-2 rounded-xl border border-border/80 bg-card/70 px-4 py-2.5 font-mono text-xs font-medium text-muted-foreground hover:text-primary hover:border-primary/50 hover:-translate-y-0.5 transition-all cursor-pointer"
           >
             <span>{t.footer.backToTop}</span>
-            <ArrowUp size={14} aria-hidden="true" />
+            <ArrowUp
+              size={14}
+              aria-hidden="true"
+              className="transition-transform duration-200 group-hover:-translate-y-0.5"
+            />
           </button>
         </div>
       </div>

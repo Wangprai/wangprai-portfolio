@@ -1,6 +1,8 @@
+import type { CSSProperties } from "react";
 import { Building2, Calendar, TrendingUp } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import ScrollReveal from "./motion/ScrollReveal";
+import CountUp from "./react-bits/CountUp";
 import SectionHeading from "./SectionHeading";
 
 const INTERNSHIP_STACK = [
@@ -14,8 +16,19 @@ const INTERNSHIP_STACK = [
   "Donut Model",
 ] as const;
 
+const parseAccuracyRange = (value: string) => {
+  const match = value.match(/(\d+)%\s*([^\d\s%]+)\s*(\d+)%/);
+  if (!match) return null;
+  return {
+    from: Number(match[1]),
+    arrow: match[2],
+    to: Number(match[3]),
+  };
+};
+
 const Experience = () => {
   const { t } = usePersonalData();
+  const highlight = parseAccuracyRange(t.experience.highlightValue);
 
   const jobs = [
     {
@@ -37,15 +50,22 @@ const Experience = () => {
           />
         </ScrollReveal>
 
-        <div className="relative pl-6 sm:pl-9 border-l border-primary/30 space-y-8">
+        <ScrollReveal delayMs={70} className="relative pl-6 sm:pl-9 space-y-8">
+          {/* Timeline rail draws downward on reveal */}
+          <span
+            aria-hidden="true"
+            className="reveal-line-y absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-primary/70 via-primary/35 to-primary/10"
+          />
           {jobs.map((job) => (
-            <ScrollReveal key={job.company + job.period} delayMs={70}>
-              <article className="relative glass-card p-6 sm:p-8 hover:border-primary/45 transition-colors duration-300">
+            <div key={job.company + job.period}>
+              <article className="group/job relative glass-card p-6 sm:p-8 hover:border-primary/45 transition-colors duration-300">
                 {/* Timeline node */}
                 <span
                   aria-hidden="true"
                   className="absolute -left-[31px] sm:-left-[43px] top-8 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary ring-4 ring-background shadow-[0_0_16px_hsl(var(--primary)/0.65)]"
-                />
+                >
+                  <span className="absolute inset-0 rounded-full bg-primary/60 animate-ping [animation-iteration-count:3]" />
+                </span>
 
                 {/* Top Metadata Header */}
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pb-6 mb-6 border-b border-border/70">
@@ -75,7 +95,17 @@ const Experience = () => {
                       <span>{t.experience.highlightLabel}</span>
                     </div>
                     <p className="font-mono text-lg sm:text-xl font-bold text-primary">
-                      {t.experience.highlightValue}
+                      {highlight ? (
+                        <>
+                          <span className="sr-only">{t.experience.highlightValue}</span>
+                          <span aria-hidden="true">
+                            {highlight.from}% {highlight.arrow}{" "}
+                            <CountUp from={highlight.from} to={highlight.to} />%
+                          </span>
+                        </>
+                      ) : (
+                        t.experience.highlightValue
+                      )}
                     </p>
                   </div>
                 </div>
@@ -85,7 +115,8 @@ const Experience = () => {
                   {job.bullets.map((bullet, idx) => (
                     <li
                       key={idx}
-                      className="flex items-start gap-3 text-sm sm:text-base text-muted-foreground leading-relaxed"
+                      className="reveal-item flex items-start gap-3 text-sm sm:text-base text-muted-foreground leading-relaxed"
+                      style={{ "--i": idx, "--base": "220ms" } as CSSProperties}
                     >
                       <span
                         aria-hidden="true"
@@ -102,10 +133,11 @@ const Experience = () => {
                     {t.experience.stackLabel}
                   </p>
                   <ul className="flex flex-wrap gap-2">
-                    {INTERNSHIP_STACK.map((tech) => (
+                    {INTERNSHIP_STACK.map((tech, idx) => (
                       <li
                         key={tech}
-                        className="font-mono text-xs px-3 py-1 rounded-lg bg-secondary/75 text-secondary-foreground border border-border/70"
+                        className="reveal-item font-mono text-xs px-3 py-1 rounded-lg bg-secondary/75 text-secondary-foreground border border-border/70 transition-colors duration-200 hover:border-primary/50 hover:text-primary"
+                        style={{ "--i": idx * 0.6, "--base": "420ms" } as CSSProperties}
                       >
                         {tech}
                       </li>
@@ -113,9 +145,9 @@ const Experience = () => {
                   </ul>
                 </div>
               </article>
-            </ScrollReveal>
+            </div>
           ))}
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

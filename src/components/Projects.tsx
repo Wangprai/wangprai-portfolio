@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import {
   ArrowUpRight,
   AudioLines,
@@ -110,13 +110,13 @@ const Projects = () => {
                   intensity={theme === "dark" ? 0.16 : 0.12}
                   borderGlow={0.65}
                   spotlightSize={260}
-                  className="h-full p-6 sm:p-7 flex flex-col justify-between group transition-transform duration-300 hover:-translate-y-1"
+                  className="h-full p-6 sm:p-7 flex flex-col justify-between group transition-transform duration-300 ease-out hover:-translate-y-1.5"
                 >
                   <div>
                     {/* Top Bar: Category + External Verified Links */}
                     <div className="flex items-center justify-between gap-3 mb-5">
                       <div className="inline-flex items-center gap-2">
-                        <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary/12 border border-primary/25 text-primary shrink-0">
+                        <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary/12 border border-primary/25 text-primary shrink-0 transition-[transform,background-color,color,border-color] duration-300 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary">
                           <Icon size={17} aria-hidden="true" />
                         </span>
                         <span className="font-mono text-[11px] uppercase tracking-wider text-primary">
@@ -132,7 +132,7 @@ const Projects = () => {
                             rel="noopener noreferrer"
                             aria-label={`${project.title} — GitHub`}
                             title="GitHub"
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/80 bg-background/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/80 bg-background/50 text-muted-foreground hover:text-primary hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200"
                           >
                             <FaGithub size={15} aria-hidden="true" />
                           </a>
@@ -144,7 +144,7 @@ const Projects = () => {
                             rel="noopener noreferrer"
                             aria-label={`${project.title} — Hugging Face`}
                             title="Hugging Face"
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/80 bg-background/50 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border/80 bg-background/50 text-muted-foreground hover:text-primary hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-200"
                           >
                             <SiHuggingface size={15} aria-hidden="true" />
                           </a>
@@ -165,10 +165,11 @@ const Projects = () => {
                   {/* Footer: Stack & Minimal Modal Trigger */}
                   <div className="space-y-4 pt-4 border-t border-border/60">
                     <ul className="flex flex-wrap gap-1.5">
-                      {project.tech.map((tech) => (
+                      {project.tech.map((tech, techIdx) => (
                         <li
                           key={tech}
-                          className="font-mono text-[11px] text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-md"
+                          style={{ "--i": techIdx * 0.45, "--base": "120ms" } as CSSProperties}
+                          className="reveal-item font-mono text-[11px] text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-md transition-colors duration-200 group-hover:border-primary/35"
                         >
                           {tech}
                         </li>
@@ -178,12 +179,12 @@ const Projects = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedProjectId(project.id)}
-                      className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                      className="group/btn inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
                     >
                       <span>{t.projects.viewDetails}</span>
                       <ArrowUpRight
                         size={14}
-                        className="text-primary transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                        className="text-primary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"
                         aria-hidden="true"
                       />
                     </button>

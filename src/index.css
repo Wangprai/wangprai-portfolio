@@ -40,6 +40,74 @@
   --animate-fade-in: fade-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-fade-in-up: fade-in-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-aurora-float: aurora-float 16s ease-in-out infinite alternate;
+  --animate-modal-in: modal-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-menu-in: menu-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-icon-swap: icon-swap 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-spin-slow: orbit-spin 48s linear infinite;
+  --animate-caret: caret-blink 1.1s steps(1, end) infinite;
+  --animate-scroll-dot: scroll-dot 1.9s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+
+  @keyframes scroll-dot {
+    0% {
+      opacity: 0;
+      transform: translateY(0);
+    }
+    30% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(9px);
+    }
+  }
+
+  @keyframes orbit-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes modal-in {
+    0% {
+      opacity: 0;
+      transform: translateY(14px) scale(0.97);
+      filter: blur(4px);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+  }
+  @keyframes menu-in {
+    0% {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes icon-swap {
+    0% {
+      opacity: 0;
+      transform: rotate(-90deg) scale(0.6);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes caret-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
 
   @keyframes fade-in {
     0% {
@@ -239,6 +307,221 @@ html[lang="en"] body {
   transform: translateY(4px);
 }
 
+/* ------------------------------------------------------------------
+ * Motion primitives (dependency-free adaptations of React Bits ideas)
+ * ------------------------------------------------------------------ */
+
+/* Hero entrance — short, staggered via --d. Content is never delayed > ~0.6s. */
+@keyframes enter-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.hero-enter {
+  animation: enter-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* BlurText (React Bits "Blur Text" adaptation) */
+@keyframes blur-word {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.18em);
+    filter: blur(10px);
+  }
+  60% {
+    opacity: 0.6;
+    transform: translateY(0.04em);
+    filter: blur(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.blur-word {
+  display: inline-block;
+  animation: blur-word 0.75s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Staggered children inside <ScrollReveal> (React Bits "Animated Content" adaptation).
+ * Uses animation fill "backwards" so hover transforms/colors keep working afterwards. */
+@keyframes reveal-item {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-reveal="hidden"] .reveal-item {
+  opacity: 0;
+}
+
+[data-reveal="shown"] .reveal-item {
+  animation: reveal-item 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms + var(--base, 80ms));
+}
+
+/* Accent lines that draw in when their section is revealed */
+.reveal-line {
+  transform-origin: left center;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+
+.reveal-line-y {
+  transform-origin: center top;
+  transition: transform 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+
+[data-reveal="hidden"] .reveal-line {
+  transform: scaleX(0);
+}
+
+[data-reveal="hidden"] .reveal-line-y {
+  transform: scaleY(0);
+}
+
+/* Glare Hover (React Bits "Glare Hover" adaptation) */
+.glare-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.glare-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    -45deg,
+    transparent 58%,
+    hsl(var(--primary) / 0.16) 68%,
+    hsl(0 0% 100% / 0.06) 70%,
+    transparent 80%
+  );
+  background-size: 260% 260%;
+  background-position: -100% -100%;
+  background-repeat: no-repeat;
+  transition: background-position 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glare-hover:hover::after,
+.glare-hover:focus-within::after {
+  background-position: 100% 100%;
+}
+
+/* Border beam (React Bits "Star Border" adaptation) — a slow light travelling the edge */
+@property --beam-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes beam-spin {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+.border-beam::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0deg,
+    hsl(var(--primary) / 0.9) 36deg,
+    hsl(var(--accent) / 0.6) 60deg,
+    transparent 100deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: beam-spin 9s linear infinite;
+}
+
+/* Custom cursor (desktop fine-pointer only; rendered by GlowCursor) */
+.cursor-ring {
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1.5px solid hsl(var(--primary) / 0.7);
+  background-color: hsl(var(--primary) / 0.03);
+  box-shadow:
+    0 0 0 1px hsl(var(--background) / 0.35),
+    0 0 14px hsl(var(--violet-glow) / 0.28),
+    inset 0 0 10px hsl(var(--violet-glow) / 0.14);
+  transition:
+    opacity 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.cursor-ring[data-hover="true"] {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
+  box-shadow:
+    0 0 0 1px hsl(var(--background) / 0.4),
+    0 0 20px hsl(var(--violet-glow) / 0.4),
+    inset 0 0 12px hsl(var(--violet-glow) / 0.2);
+}
+
+.cursor-ring[data-pressed="true"] {
+  border-color: hsl(var(--accent));
+  background-color: hsl(var(--primary) / 0.16);
+}
+
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: hsl(var(--primary));
+  box-shadow:
+    0 0 0 2px hsl(var(--background) / 0.55),
+    0 0 10px hsl(var(--violet-glow) / 0.7);
+  transition: opacity 0.2s ease;
+}
+
+.light .cursor-ring {
+  box-shadow:
+    0 0 0 1px hsl(0 0% 100% / 0.6),
+    0 0 12px hsl(var(--violet-glow) / 0.22),
+    inset 0 0 8px hsl(var(--violet-glow) / 0.1);
+}
+
+.light .cursor-ring[data-hover="true"] {
+  box-shadow:
+    0 0 0 1px hsl(0 0% 100% / 0.7),
+    0 0 18px hsl(var(--violet-glow) / 0.3),
+    inset 0 0 10px hsl(var(--violet-glow) / 0.14);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -248,8 +531,16 @@ html[lang="en"] body {
   ::before,
   ::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .blur-word,
+  .hero-enter,
+  .reveal-item {
+    filter: none !important;
   }
 }

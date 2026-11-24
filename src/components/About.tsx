@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Briefcase, GraduationCap, Layers } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import profile from "../assets/profile.png";
@@ -9,16 +10,19 @@ const About = () => {
 
   const snapshotItems = [
     {
+      id: "degree",
       icon: GraduationCap,
       label: t.about.snapshot.degreeLabel,
       value: t.about.snapshot.degreeValue,
     },
     {
+      id: "experience",
       icon: Briefcase,
       label: t.about.snapshot.experienceLabel,
       value: t.about.snapshot.experienceValue,
     },
     {
+      id: "focus",
       icon: Layers,
       label: t.about.snapshot.focusLabel,
       value: t.about.snapshot.focusValue,
@@ -39,22 +43,29 @@ const About = () => {
         <div className="grid lg:grid-cols-[1.35fr_0.85fr] gap-10 lg:gap-14 items-start">
           {/* Editorial Storytelling Column */}
           <ScrollReveal delayMs={60} className="order-2 lg:order-1 space-y-5">
-            <p className="text-base sm:text-lg text-foreground/95 leading-relaxed font-medium">
+            <p
+              className="reveal-item text-base sm:text-lg text-foreground/95 leading-relaxed font-medium"
+              style={{ "--i": 0 } as CSSProperties}
+            >
               {t.about.p1}
             </p>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              {t.about.p2}
-            </p>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              {t.about.p3}
-            </p>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              {t.about.p4}
-            </p>
+            {[t.about.p2, t.about.p3, t.about.p4].map((paragraph, idx) => (
+              <p
+                key={idx}
+                className="reveal-item text-sm sm:text-base text-muted-foreground leading-relaxed"
+                style={{ "--i": idx + 1 } as CSSProperties}
+              >
+                {paragraph}
+              </p>
+            ))}
           </ScrollReveal>
 
           {/* Framed Portrait & Factual Snapshot */}
-          <ScrollReveal delayMs={120} className="order-1 lg:order-2 flex flex-col items-center lg:items-stretch gap-6">
+          <ScrollReveal
+            delayMs={120}
+            variant="scale"
+            className="order-1 lg:order-2 flex flex-col items-center lg:items-stretch gap-6"
+          >
             <div className="relative group w-56 h-56 sm:w-64 sm:h-64 lg:w-full lg:max-w-[290px] lg:mx-auto lg:h-auto lg:aspect-square">
               <div
                 aria-hidden="true"
@@ -72,7 +83,7 @@ const About = () => {
                   height={290}
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                 />
               </div>
             </div>
@@ -82,9 +93,13 @@ const About = () => {
                 {t.about.snapshot.title}
               </p>
               <dl className="space-y-3">
-                {snapshotItems.map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-start gap-3">
-                    <span className="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary shrink-0">
+                {snapshotItems.map(({ id, icon: Icon, label, value }, idx) => (
+                  <div
+                    key={id}
+                    className="reveal-item group/snap flex items-start gap-3"
+                    style={{ "--i": idx, "--base": "260ms" } as CSSProperties}
+                  >
+                    <span className="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary shrink-0 transition-colors duration-300 group-hover/snap:bg-primary group-hover/snap:text-primary-foreground">
                       <Icon size={14} aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
