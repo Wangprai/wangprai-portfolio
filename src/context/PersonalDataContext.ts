@@ -81,6 +81,7 @@ export const translations = {
       highlightLabel: "Donut Invoice Accuracy",
       highlightValue: "87% → 92%",
       stackLabel: "Technologies Used",
+      deliverableTags: ["Web Control Panel", "Applied AI / OCR", "Internal Full-Stack"],
       jobs: {
         intern: {
           role: "Software Engineer Intern",
@@ -101,6 +102,7 @@ export const translations = {
       dsaiframeworks: "Data Analysis & AI Frameworks",
       tools: "Tools & Platforms",
       learning: "Currently Learning",
+      allFilter: "All",
     },
     projects: {
       title: "Projects",
@@ -113,6 +115,12 @@ export const translations = {
       noPublicLinks: "Internal / private project — no public repository link available.",
       openGithub: "View on GitHub",
       openHuggingFace: "View on Hugging Face",
+      featuredBadge: "Featured",
+      filters: {
+        all: "All",
+        web: "Web & Full Stack",
+        aiData: "AI & Data",
+      },
       categories: {
         fullstack: "Full Stack Web",
         backendWeb: "Web & Backend",
@@ -259,6 +267,7 @@ export const translations = {
       highlightLabel: "ความแม่นยำโมเดล Donut (สแกนใบแจ้งหนี้)",
       highlightValue: "87% → 92%",
       stackLabel: "เทคโนโลยีที่ใช้",
+      deliverableTags: ["ระบบจัดการเว็บไซต์", "Applied AI / OCR", "เว็บแอปภายในองค์กร"],
       jobs: {
         intern: {
           role: "นักศึกษาฝึกงาน ตำแหน่ง Software Engineer",
@@ -279,6 +288,7 @@ export const translations = {
       dsaiframeworks: "เฟรมเวิร์กด้าน Data Analysis และ AI",
       tools: "เครื่องมือและแพลตฟอร์ม",
       learning: "กำลังศึกษาเพิ่มเติม",
+      allFilter: "ทั้งหมด",
     },
     projects: {
       title: "โปรเจกต์",
@@ -291,6 +301,12 @@ export const translations = {
       noPublicLinks: "โปรเจกต์ภายในองค์กร จึงไม่มีลิงก์ซอร์สโค้ดสาธารณะ",
       openGithub: "ดูบน GitHub",
       openHuggingFace: "ดูบน Hugging Face",
+      featuredBadge: "ผลงานเด่น",
+      filters: {
+        all: "ทั้งหมด",
+        web: "Web & Full Stack",
+        aiData: "AI & Data",
+      },
       categories: {
         fullstack: "Full Stack Web",
         backendWeb: "Web & Backend",

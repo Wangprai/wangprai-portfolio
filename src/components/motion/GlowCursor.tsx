@@ -1,18 +1,35 @@
 import { useEffect, useRef } from "react";
 
+type CursorState = "default" | "interactive" | "card" | "external";
+
 const INTERACTIVE_SELECTOR =
   'a, button, [role="button"], summary, label[for], [data-cursor="interactive"]';
+const CARD_SELECTOR = '[data-cursor="card"]';
 const TEXT_INPUT_SELECTOR =
   'input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable="true"]';
 
+/**
+ * GlowCursor — Futuristic violet orbital cursor with three GPU-composited layers:
+ * 1. Ambient trailing violet aura (illuminates surfaces smoothly).
+ * 2. Precision orbital reticle with context-aware states (default, interactive,
+ *    card lens with micro-label, external link, pressed pulse).
+ * 3. Instant luminous diamond core.
+ *
+ * Preserves native cursor behavior, never intercepts pointer events, disables
+ * automatically on touch/coarse pointers and `prefers-reduced-motion`.
+ */
 const GlowCursor = () => {
-  const ringRef = useRef<HTMLDivElement>(null);
-  const dotRef = useRef<HTMLDivElement>(null);
+  const auraRef = useRef<HTMLDivElement>(null);
+  const reticleRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const coreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const ring = ringRef.current;
-    const dot = dotRef.current;
-    if (!ring || !dot || typeof window === "undefined") return;
+    const aura = auraRef.current;
+    const reticle = reticleRef.current;
+    const label = labelRef.current;
+    const core = coreRef.current;
+    if (!aura || !reticle || !label || !core || typeof window === "undefined") return;
 
     const pointerQuery = window.matchMedia?.("(hover: hover) and (pointer: fine)");
     const desktopQuery = window.matchMedia?.("(min-width: 768px)");
@@ -23,52 +40,79 @@ const GlowCursor = () => {
       Boolean(desktopQuery?.matches) &&
       !reducedQuery?.matches;
 
-    const ringPos = { x: -120, y: -120 };
-    const target = { x: -120, y: -120 };
-    let ringScale = 1;
-    let targetRingScale = 1;
-    let dotScale = 1;
-    let targetDotScale = 1;
+    const auraPos = { x: -160, y: -160 };
+    const reticlePos = { x: -160, y: -160 };
+    const target = { x: -160, y: -160 };
+
+    let reticleScale = 1;
+    let targetReticleScale = 1;
+    let coreScale = 1;
+    let targetCoreScale = 1;
+    let coreRot = 45;
+    let targetCoreRot = 45;
+
     let visible = false;
-    let hovering = false;
+    let state: CursorState = "default";
     let pressed = false;
     let overTextInput = false;
     let raf = 0;
     let lastTime = 0;
 
-    const syncScales = () => {
+    const syncTargets = () => {
       if (pressed) {
-        targetRingScale = hovering ? 1.15 : 0.82;
-        targetDotScale = 0.85;
-      } else if (hovering) {
-        targetRingScale = 1.42;
-        targetDotScale = 0.55;
+        targetReticleScale = state === "card" ? 1.52 : state === "interactive" ? 1.12 : 0.78;
+        targetCoreScale = 0.7;
+        targetCoreRot = 135;
+        return;
+      }
+
+      if (state === "card") {
+        targetReticleScale = 1.72;
+        targetCoreScale = 0;
+        targetCoreRot = 90;
+      } else if (state === "external") {
+        targetReticleScale = 1.48;
+        targetCoreScale = 0.55;
+        targetCoreRot = 90;
+      } else if (state === "interactive") {
+        targetReticleScale = 1.44;
+        targetCoreScale = 0.5;
+        targetCoreRot = 90;
       } else {
-        targetRingScale = 1;
-        targetDotScale = 1;
+        targetReticleScale = 1;
+        targetCoreScale = 1;
+        targetCoreRot = 45;
       }
     };
 
     const setVisibility = (show: boolean) => {
       visible = show;
-      const opacity = show ? (overTextInput ? "0.25" : "1") : "0";
-      ring.style.opacity = opacity;
-      dot.style.opacity = show ? (overTextInput ? "0" : "1") : "0";
+      if (!show) {
+        aura.style.opacity = "0";
+        reticle.style.opacity = "0";
+        core.style.opacity = "0";
+        return;
+      }
+
+      aura.style.opacity = overTextInput ? "0.18" : state === "default" ? "0.8" : "1";
+      reticle.style.opacity = overTextInput ? "0.2" : "1";
+      core.style.opacity = overTextInput || state === "card" ? "0" : "1";
     };
 
     const hide = () => {
-      hovering = false;
+      state = "default";
       pressed = false;
       overTextInput = false;
-      ring.removeAttribute("data-hover");
-      ring.removeAttribute("data-pressed");
-      syncScales();
+      reticle.removeAttribute("data-state");
+      reticle.removeAttribute("data-pressed");
+      syncTargets();
       setVisibility(false);
     };
 
     const paint = () => {
-      ring.style.transform = `translate3d(${ringPos.x.toFixed(1)}px, ${ringPos.y.toFixed(1)}px, 0) translate(-50%, -50%) scale(${ringScale.toFixed(3)})`;
-      dot.style.transform = `translate3d(${target.x.toFixed(1)}px, ${target.y.toFixed(1)}px, 0) translate(-50%, -50%) scale(${dotScale.toFixed(3)})`;
+      aura.style.transform = `translate3d(${auraPos.x.toFixed(1)}px, ${auraPos.y.toFixed(1)}px, 0) translate(-50%, -50%)`;
+      reticle.style.transform = `translate3d(${reticlePos.x.toFixed(1)}px, ${reticlePos.y.toFixed(1)}px, 0) translate(-50%, -50%) scale(${reticleScale.toFixed(3)})`;
+      core.style.transform = `translate3d(${target.x.toFixed(1)}px, ${target.y.toFixed(1)}px, 0) translate(-50%, -50%) rotate(${coreRot.toFixed(1)}deg) scale(${coreScale.toFixed(3)})`;
     };
 
     const tick = (now: number) => {
@@ -76,30 +120,39 @@ const GlowCursor = () => {
       const dt = lastTime ? Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000)) : 1 / 60;
       lastTime = now;
 
-      // Frame-rate-independent smoothing for outer glowing violet ring
-      const posFactor = 1 - Math.exp(-dt * 15);
-      const scaleFactor = 1 - Math.exp(-dt * 18);
+      const auraFactor = 1 - Math.exp(-dt * 6.5);
+      const reticleFactor = 1 - Math.exp(-dt * 15.5);
+      const scaleFactor = 1 - Math.exp(-dt * 17);
 
-      ringPos.x += (target.x - ringPos.x) * posFactor;
-      ringPos.y += (target.y - ringPos.y) * posFactor;
-      ringScale += (targetRingScale - ringScale) * scaleFactor;
-      dotScale += (targetDotScale - dotScale) * scaleFactor;
+      auraPos.x += (target.x - auraPos.x) * auraFactor;
+      auraPos.y += (target.y - auraPos.y) * auraFactor;
+      reticlePos.x += (target.x - reticlePos.x) * reticleFactor;
+      reticlePos.y += (target.y - reticlePos.y) * reticleFactor;
+      reticleScale += (targetReticleScale - reticleScale) * scaleFactor;
+      coreScale += (targetCoreScale - coreScale) * scaleFactor;
+      coreRot += (targetCoreRot - coreRot) * scaleFactor;
 
       paint();
 
       const settled =
-        Math.abs(target.x - ringPos.x) < 0.25 &&
-        Math.abs(target.y - ringPos.y) < 0.25 &&
-        Math.abs(targetRingScale - ringScale) < 0.004 &&
-        Math.abs(targetDotScale - dotScale) < 0.004;
+        Math.abs(target.x - auraPos.x) < 0.35 &&
+        Math.abs(target.y - auraPos.y) < 0.35 &&
+        Math.abs(target.x - reticlePos.x) < 0.25 &&
+        Math.abs(target.y - reticlePos.y) < 0.25 &&
+        Math.abs(targetReticleScale - reticleScale) < 0.004 &&
+        Math.abs(targetCoreScale - coreScale) < 0.004 &&
+        Math.abs(targetCoreRot - coreRot) < 0.3;
 
       if (!settled && visible) {
         raf = requestAnimationFrame(tick);
       } else {
-        ringPos.x = target.x;
-        ringPos.y = target.y;
-        ringScale = targetRingScale;
-        dotScale = targetDotScale;
+        auraPos.x = target.x;
+        auraPos.y = target.y;
+        reticlePos.x = target.x;
+        reticlePos.y = target.y;
+        reticleScale = targetReticleScale;
+        coreScale = targetCoreScale;
+        coreRot = targetCoreRot;
         paint();
         lastTime = 0;
       }
@@ -114,14 +167,27 @@ const GlowCursor = () => {
 
     const inspectTarget = (eventTarget: EventTarget | null) => {
       const element = eventTarget instanceof Element ? eventTarget : null;
-      const nextHover = Boolean(element?.closest(INTERACTIVE_SELECTOR));
+      const interactiveEl = element?.closest(INTERACTIVE_SELECTOR) ?? null;
+      const cardEl = element?.closest(CARD_SELECTOR) ?? null;
       const nextTextInput = Boolean(element?.closest(TEXT_INPUT_SELECTOR));
 
-      if (nextHover !== hovering) {
-        hovering = nextHover;
-        if (hovering) ring.setAttribute("data-hover", "true");
-        else ring.removeAttribute("data-hover");
-        syncScales();
+      let nextState: CursorState = "default";
+      if (interactiveEl) {
+        const isExternal =
+          interactiveEl.tagName === "A" && interactiveEl.getAttribute("target") === "_blank";
+        nextState = isExternal ? "external" : "interactive";
+      } else if (cardEl) {
+        nextState = "card";
+        const customLabel = cardEl.getAttribute("data-cursor-label");
+        label.textContent = customLabel || "VIEW";
+      }
+
+      if (nextState !== state) {
+        state = nextState;
+        if (state === "default") reticle.removeAttribute("data-state");
+        else reticle.setAttribute("data-state", state);
+        syncTargets();
+        if (visible) setVisibility(true);
       }
 
       if (nextTextInput !== overTextInput) {
@@ -138,14 +204,16 @@ const GlowCursor = () => {
 
       target.x = event.clientX;
       target.y = event.clientY;
-
       inspectTarget(event.target);
 
       if (!visible) {
-        ringPos.x = target.x;
-        ringPos.y = target.y;
-        ringScale = targetRingScale;
-        dotScale = targetDotScale;
+        auraPos.x = target.x;
+        auraPos.y = target.y;
+        reticlePos.x = target.x;
+        reticlePos.y = target.y;
+        reticleScale = targetReticleScale;
+        coreScale = targetCoreScale;
+        coreRot = targetCoreRot;
         paint();
         setVisibility(true);
       }
@@ -156,17 +224,16 @@ const GlowCursor = () => {
     const onPointerDown = (event: PointerEvent) => {
       if (event.pointerType !== "mouse" || !isAllowed() || !visible) return;
       pressed = true;
-      ring.setAttribute("data-pressed", "true");
-      syncScales();
+      reticle.setAttribute("data-pressed", "true");
+      syncTargets();
       wake();
     };
 
     const onPointerUp = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse") return;
-      if (!pressed) return;
+      if (event.pointerType !== "mouse" || !pressed) return;
       pressed = false;
-      ring.removeAttribute("data-pressed");
-      syncScales();
+      reticle.removeAttribute("data-pressed");
+      syncTargets();
       wake();
     };
 
@@ -202,15 +269,27 @@ const GlowCursor = () => {
   return (
     <>
       <div
-        ref={ringRef}
+        ref={auraRef}
         aria-hidden="true"
-        className="cursor-ring pointer-events-none fixed left-0 top-0 z-[80] opacity-0"
+        className="cursor-aura pointer-events-none fixed left-0 top-0 z-[78] opacity-0"
         style={{ willChange: "transform, opacity" }}
       />
       <div
-        ref={dotRef}
+        ref={reticleRef}
         aria-hidden="true"
-        className="cursor-dot pointer-events-none fixed left-0 top-0 z-[80] opacity-0"
+        className="cursor-reticle pointer-events-none fixed left-0 top-0 z-[80] opacity-0"
+        style={{ willChange: "transform, opacity" }}
+      >
+        <span className="cursor-reticle-orbit" />
+        <span className="cursor-reticle-ring" />
+        <span ref={labelRef} className="cursor-reticle-label">
+          VIEW
+        </span>
+      </div>
+      <div
+        ref={coreRef}
+        aria-hidden="true"
+        className="cursor-core pointer-events-none fixed left-0 top-0 z-[81] opacity-0"
         style={{ willChange: "transform, opacity" }}
       />
     </>

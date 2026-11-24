@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
-import { ExternalLink, Lock, X } from "lucide-react";
+import { ExternalLink, Layers, Lock, X } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 import { SiHuggingface } from "react-icons/si";
 import { usePersonalData } from "../hooks/usePersonalData";
+import StarBorder from "./react-bits/StarBorder";
 
 export interface ProjectItem {
   id: string;
@@ -20,6 +21,10 @@ interface ProjectModalProps {
   onClose: () => void;
 }
 
+/**
+ * Minimal Modal for Project Details (confirmed design preference — not full-screen).
+ * Supports Escape-to-close, focus trapping, focus restoration, and responsive touch scrolling.
+ */
 const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
   const { t } = usePersonalData();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -32,7 +37,6 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Move focus into the dialog
     const frame = window.requestAnimationFrame(() => {
       closeButtonRef.current?.focus();
     });
@@ -79,130 +83,138 @@ const ProjectModal = ({ project, onClose }: ProjectModalProps) => {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-black/65 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-black/72 backdrop-blur-md animate-fade-in"
       onClick={onClose}
       role="presentation"
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="project-modal-title"
-        onClick={(event) => event.stopPropagation()}
-        className="relative w-full max-w-xl max-h-[88svh] overflow-y-auto rounded-2xl border border-primary/35 bg-card text-card-foreground shadow-2xl shadow-black/45 p-6 sm:p-7 animate-modal-in"
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 pb-5 mb-5 border-b border-border/80">
-          <div className="min-w-0">
-            <span className="inline-block font-mono text-[11px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-primary/12 text-primary border border-primary/25 mb-2.5">
-              {project.category}
-            </span>
-            <h3
-              id="project-modal-title"
-              className="text-xl sm:text-2xl font-bold text-foreground leading-snug"
+      <StarBorder speedSeconds={8} className="w-full max-w-xl rounded-2xl animate-modal-in">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="project-modal-title"
+          onClick={(event) => event.stopPropagation()}
+          className="relative w-full max-h-[88svh] overflow-y-auto rounded-2xl border border-primary/35 bg-card/98 text-card-foreground shadow-[0_32px_90px_-20px_rgba(4,2,16,0.9)] p-6 sm:p-7"
+        >
+          {/* Ambient Top Violet Horizon Glow */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-36 w-72 rounded-full bg-primary/20 blur-[60px]"
+          />
+
+          {/* Header */}
+          <div className="relative flex items-start justify-between gap-4 pb-5 mb-5 border-b border-border/80">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider px-3 py-0.5 rounded-full bg-primary/14 text-primary border border-primary/30 mb-3">
+                <Layers size={11} aria-hidden="true" />
+                {project.category}
+              </span>
+              <h3
+                id="project-modal-title"
+                className="text-xl sm:text-2xl font-bold text-foreground leading-snug tracking-tight"
+              >
+                {project.title}
+              </h3>
+            </div>
+
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={onClose}
+              aria-label={t.projects.closeModal}
+              className="group/close inline-flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-secondary/70 text-muted-foreground hover:text-foreground hover:border-primary/60 hover:bg-primary/10 transition-all shrink-0 cursor-pointer"
             >
-              {project.title}
-            </h3>
+              <X
+                size={18}
+                aria-hidden="true"
+                className="transition-transform duration-200 group-hover/close:rotate-90"
+              />
+            </button>
           </div>
 
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            aria-label={t.projects.closeModal}
-            className="group/close inline-flex items-center justify-center w-9 h-9 rounded-xl border border-border bg-secondary/60 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors shrink-0 cursor-pointer"
-          >
-            <X
-              size={18}
-              aria-hidden="true"
-              className="transition-transform duration-200 group-hover/close:rotate-90"
-            />
-          </button>
-        </div>
+          {/* Summary */}
+          <p className="relative text-sm sm:text-[15px] text-muted-foreground leading-relaxed mb-6">
+            {project.description}
+          </p>
 
-        {/* Summary */}
-        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-          {project.description}
-        </p>
-
-        {/* Key Details & Contribution */}
-        <div className="mb-6">
-          <h4 className="font-mono text-xs uppercase tracking-wider text-primary mb-3">
-            {t.projects.highlightsLabel}
-          </h4>
-          <ul className="space-y-2.5">
-            {project.highlights.map((item, idx) => (
-              <li
-                key={idx}
-                className="flex items-start gap-2.5 text-sm text-foreground/90 leading-relaxed"
-              >
-                <span
-                  aria-hidden="true"
-                  className="mt-2 h-1.5 w-1.5 rounded-full bg-primary shrink-0"
-                />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Technology Stack */}
-        <div className="mb-6">
-          <h4 className="font-mono text-xs uppercase tracking-wider text-primary mb-3">
-            {t.projects.techStackLabel}
-          </h4>
-          <ul className="flex flex-wrap gap-2">
-            {project.tech.map((tech) => (
-              <li
-                key={tech}
-                className="font-mono text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20"
-              >
-                {tech}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Verified Links */}
-        <div className="pt-5 border-t border-border/80">
-          <h4 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
-            {t.projects.linksLabel}
-          </h4>
-          {hasLinks ? (
-            <div className="flex flex-wrap gap-3">
-              {project.github && (
-                <a
-                  href={project.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-95 transition-opacity"
+          {/* Key Details & Contribution */}
+          <div className="relative mb-6">
+            <h4 className="font-mono text-xs uppercase tracking-[0.14em] text-primary font-semibold mb-3">
+              {t.projects.highlightsLabel}
+            </h4>
+            <ul className="space-y-2.5">
+              {project.highlights.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-start gap-3 rounded-xl border border-border/65 bg-background/55 px-3.5 py-2.5 text-sm text-foreground/90 leading-relaxed"
                 >
-                  <FaGithub size={16} aria-hidden="true" />
-                  <span>{t.projects.openGithub}</span>
-                  <ExternalLink size={14} aria-hidden="true" />
-                </a>
-              )}
-              {project.huggingface && (
-                <a
-                  href={project.huggingface}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-primary/45 bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  <span className="mt-0.5 font-mono text-[11px] font-semibold text-primary shrink-0">
+                    0{idx + 1}
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Technology Stack */}
+          <div className="relative mb-6">
+            <h4 className="font-mono text-xs uppercase tracking-[0.14em] text-primary font-semibold mb-3">
+              {t.projects.techStackLabel}
+            </h4>
+            <ul className="flex flex-wrap gap-2">
+              {project.tech.map((tech) => (
+                <li
+                  key={tech}
+                  className="font-mono text-xs px-3 py-1 rounded-lg bg-primary/12 text-primary border border-primary/25 font-medium"
                 >
-                  <SiHuggingface size={16} aria-hidden="true" />
-                  <span>{t.projects.openHuggingFace}</span>
-                  <ExternalLink size={14} aria-hidden="true" />
-                </a>
-              )}
-            </div>
-          ) : (
-            <p className="inline-flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-              <Lock size={14} className="text-primary shrink-0" aria-hidden="true" />
-              <span>{t.projects.noPublicLinks}</span>
-            </p>
-          )}
+                  {tech}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Verified Links */}
+          <div className="relative pt-5 border-t border-border/80">
+            <h4 className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground mb-3">
+              {t.projects.linksLabel}
+            </h4>
+            {hasLinks ? (
+              <div className="flex flex-wrap gap-3">
+                {project.github && (
+                  <a
+                    href={project.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:opacity-95 transition-opacity"
+                  >
+                    <FaGithub size={16} aria-hidden="true" />
+                    <span>{t.projects.openGithub}</span>
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                )}
+                {project.huggingface && (
+                  <a
+                    href={project.huggingface}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary/50 bg-primary/12 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    <SiHuggingface size={16} aria-hidden="true" />
+                    <span>{t.projects.openHuggingFace}</span>
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <p className="inline-flex items-center gap-2 rounded-xl border border-border/75 bg-secondary/50 px-3.5 py-2 text-xs sm:text-sm text-muted-foreground">
+                <Lock size={14} className="text-primary shrink-0" aria-hidden="true" />
+                <span>{t.projects.noPublicLinks}</span>
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </StarBorder>
     </div>
   );
 };

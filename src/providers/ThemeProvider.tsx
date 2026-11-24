@@ -27,7 +27,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (themeColorMeta) {
-      themeColorMeta.setAttribute("content", theme === "dark" ? "#090714" : "#f8f7fc");
+      themeColorMeta.setAttribute("content", theme === "dark" ? "#06040d" : "#f8f6fd");
     }
 
     try {
