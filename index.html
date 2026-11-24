@@ -1,11 +1,41 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="author" content="Wangprai Jullapech" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wangprai Portfolio</title>
+    <meta name="author" content="Wangprai Jullapech" />
+    <meta
+      name="description"
+      content="Portfolio of Wangprai Jullapech, Software Engineer specializing in Frontend, Backend, and Full Stack Development with a foundation in Computer Science, Data Science, and AI."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Wangprai Jullapech — Software Engineer" />
+    <meta
+      property="og:description"
+      content="Software Engineer portfolio showcasing full-stack web applications, engineering experience, and applied AI/NLP projects."
+    />
+    <meta name="theme-color" content="#090714" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Wangprai Jullapech — Software Engineer</title>
+    <script>
+      (function () {
+        try {
+          var storedTheme = localStorage.getItem("portfolio-theme");
+          var theme = storedTheme === "light" ? "light" : "dark";
+          var root = document.documentElement;
+          root.classList.toggle("dark", theme === "dark");
+          root.classList.toggle("light", theme === "light");
+          root.style.colorScheme = theme;
+
+          var storedLang = localStorage.getItem("portfolio-lang");
+          if (storedLang === "th" || storedLang === "en") {
+            root.lang = storedLang;
+          }
+        } catch {
+          // Fallback to default dark theme and English language
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

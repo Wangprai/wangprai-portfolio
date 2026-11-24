@@ -1,86 +1,255 @@
-import { useState } from "react";
-import { IoMenu } from "react-icons/io5";
-import { FaTimes } from "react-icons/fa";
-import { CiGlobe } from "react-icons/ci";
+import { useEffect, useState } from "react";
+import { FileText, Globe, Menu, Moon, Sun, X } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
+import { useTheme } from "../hooks/useTheme";
+
+const SECTION_IDS = [
+  "about",
+  "experience",
+  "skills",
+  "projects",
+  "education",
+  "certificates",
+  "contact",
+] as const;
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
   const { lang, t, toggleLang } = usePersonalData();
+  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
-    { label: t.nav.about, href: "#about" },
-    { label: t.nav.education, href: "#education" },
-    { label: t.nav.experience, href: "#experience" },
-    { label: t.nav.skills, href: "#skills" },
-    { label: t.nav.projects, href: "#projects" },
-    { label: t.nav.contact, href: "#contact" },
+    { id: "about", label: t.nav.about, href: "#about" },
+    { id: "experience", label: t.nav.experience, href: "#experience" },
+    { id: "skills", label: t.nav.skills, href: "#skills" },
+    { id: "projects", label: t.nav.projects, href: "#projects" },
+    { id: "education", label: t.nav.education, href: "#education" },
+    { id: "certificates", label: t.nav.certificates, href: "#certificates" },
+    { id: "contact", label: t.nav.contact, href: "#contact" },
   ];
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 16);
+      if (window.scrollY < 140) {
+        setActiveSection("");
+      }
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const elements = SECTION_IDS.map((id) => document.getElementById(id)).filter(
+      (el): el is HTMLElement => el !== null
+    );
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]?.target.id) {
+          setActiveSection(visible[0].target.id);
+        }
+      },
+      {
+        rootMargin: "-25% 0px -55% 0px",
+        threshold: [0.1, 0.35, 0.6],
+      }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
+  const themeAriaLabel =
+    theme === "dark" ? t.nav.switchThemeToLight : t.nav.switchThemeToDark;
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="#" className="font-mono text-primary font-medium text-lg">
-          &lt;Wangprai /&gt;
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-background/85 backdrop-blur-xl border-b border-border/70 shadow-sm shadow-black/5"
+          : "bg-background/45 backdrop-blur-md border-b border-transparent"
+      }`}
+    >
+      <nav
+        aria-label="Primary"
+        className="max-w-6xl mx-auto px-5 sm:px-6 h-[var(--nav-height)] flex items-center justify-between gap-3"
+      >
+        <a
+          href="#top"
+          className="group inline-flex items-center gap-1 font-mono text-base sm:text-lg font-semibold tracking-tight text-foreground hover:text-primary transition-colors shrink-0"
+        >
+          <span className="text-primary transition-transform duration-200 group-hover:-translate-x-0.5">
+            &lt;
+          </span>
+          <span>Wangprai</span>
+          <span className="text-primary transition-transform duration-200 group-hover:translate-x-0.5">
+            /&gt;
+          </span>
         </a>
 
-        <div className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-            >
-              {item.label}
-            </a>
-          ))}
+        {/* Desktop navigation */}
+        <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
+          {navItems.map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? "location" : undefined}
+                className={`relative px-2.5 xl:px-3 py-2 text-[13px] xl:text-sm font-medium rounded-lg whitespace-nowrap transition-colors duration-200 ${
+                  isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                }`}
+              >
+                {item.label}
+              </a>
+            );
+          })}
+        </div>
+
+        {/* Desktop controls */}
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={themeAriaLabel}
+            title={themeAriaLabel}
+            className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border/80 bg-card/60 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors cursor-pointer"
+          >
+            {theme === "dark" ? (
+              <Sun size={16} aria-hidden="true" />
+            ) : (
+              <Moon size={16} aria-hidden="true" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleLang}
+            aria-label={t.nav.switchLangLabel}
+            title={t.nav.switchLangLabel}
+            className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-border/80 bg-card/60 font-mono text-xs font-medium text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors cursor-pointer"
+          >
+            <Globe size={14} aria-hidden="true" />
+            <span>{lang === "en" ? "TH" : "EN"}</span>
+          </button>
+
           <a
-            href="\docs\Wangprai_Resume-SE.pdf"
-            className="text-sm border border-primary text-primary px-4 py-2 rounded-md hover:bg-primary/10 transition-colors duration-200"
+            href="/docs/Wangprai_Resume-SE.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-primary/60 bg-primary/10 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap"
           >
-            {t.nav.resume}
+            <FileText size={14} aria-hidden="true" />
+            <span>{t.nav.resume}</span>
           </a>
-          <button
-            onClick={toggleLang}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors duration-200 border border-border px-3 py-1.5 rounded-md hover:border-primary/50"
-          >
-            <CiGlobe size={14} />
-            {lang === "en" ? "TH" : "EN"}
-          </button>
         </div>
 
-        <div className="flex md:hidden items-center gap-3">
+        {/* Tablet & Mobile controls */}
+        <div className="flex lg:hidden items-center gap-2">
           <button
-            onClick={toggleLang}
-            className="flex items-center gap-1 text-sm text-muted-foreground border border-border px-2 py-1 rounded-md"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={themeAriaLabel}
+            className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-border/80 bg-card/60 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
           >
-            <CiGlobe size={14} />
-            {lang === "en" ? "TH" : "EN"}
+            {theme === "dark" ? (
+              <Sun size={17} aria-hidden="true" />
+            ) : (
+              <Moon size={17} aria-hidden="true" />
+            )}
           </button>
-          <button className="text-foreground" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <FaTimes size={24} /> : <IoMenu size={24} />}
+
+          <button
+            type="button"
+            onClick={toggleLang}
+            aria-label={t.nav.switchLangLabel}
+            className="inline-flex items-center gap-1 h-10 px-2.5 rounded-lg border border-border/80 bg-card/60 font-mono text-xs font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+          >
+            <Globe size={14} aria-hidden="true" />
+            <span>{lang === "en" ? "TH" : "EN"}</span>
+          </button>
+
+          <button
+            type="button"
+            aria-expanded={isOpen}
+            aria-controls="mobile-nav-menu"
+            aria-label={isOpen ? t.nav.closeMenu : t.nav.openMenu}
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-border/80 bg-card/60 text-foreground hover:text-primary transition-colors cursor-pointer"
+          >
+            {isOpen ? (
+              <X size={20} aria-hidden="true" />
+            ) : (
+              <Menu size={20} aria-hidden="true" />
+            )}
           </button>
         </div>
-      </div>
+      </nav>
 
+      {/* Mobile navigation drawer */}
       {isOpen && (
-        <div className="md:hidden bg-background/95 backdrop-blur-lg border-b border-border/50 animate-fade-in">
-          <ul className="flex flex-col items-center gap-6 py-8">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <a
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {item.label}
-                </a>
-              </li>
-            ))}
+        <div
+          id="mobile-nav-menu"
+          className="lg:hidden bg-background/95 backdrop-blur-xl border-b border-border/80 shadow-xl"
+        >
+          <ul className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-1.5">
+            {navItems.map((item) => {
+              const isActive = activeSection === item.id;
+              return (
+                <li key={item.href}>
+                  <a
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    aria-current={isActive ? "location" : undefined}
+                    className={`block w-full px-4 py-3 rounded-xl text-base font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary/12 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                    }`}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })}
+            <li className="pt-3 mt-2 border-t border-border/70">
+              <a
+                href="/docs/Wangprai_Resume-SE.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl border border-primary/60 bg-primary/10 text-primary font-medium hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                <FileText size={16} aria-hidden="true" />
+                <span>{t.nav.resume}</span>
+              </a>
+            </li>
           </ul>
         </div>
       )}
-    </nav>
+    </header>
   );
 };
 

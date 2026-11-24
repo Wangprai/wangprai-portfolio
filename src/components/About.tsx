@@ -1,60 +1,105 @@
+import { Briefcase, GraduationCap, Layers } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import profile from "../assets/profile.png";
+import ScrollReveal from "./motion/ScrollReveal";
+import SectionHeading from "./SectionHeading";
 
 const About = () => {
   const { t } = usePersonalData();
+
+  const snapshotItems = [
+    {
+      icon: GraduationCap,
+      label: t.about.snapshot.degreeLabel,
+      value: t.about.snapshot.degreeValue,
+    },
+    {
+      icon: Briefcase,
+      label: t.about.snapshot.experienceLabel,
+      value: t.about.snapshot.experienceValue,
+    },
+    {
+      icon: Layers,
+      label: t.about.snapshot.focusLabel,
+      value: t.about.snapshot.focusValue,
+    },
+  ];
+
   return (
     <section id="about" className="section-padding">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-          <span className="font-mono text-primary text-lg">01.</span>
-          {t.about.title}
-          <span className="hidden md:block h-px bg-border flex-1 ml-4" />
-        </h2>
-        <div className="mt-8 grid md:grid-cols-[3fr_2fr] gap-12">
-          <div className="space-y-4 text-muted-foreground leading-relaxed order-2 md:order-1">
-            <p>{t.about.p1}</p>
-            <p>{t.about.p2}</p>
-            <p>{t.about.p3}</p>
-            <p>{t.about.p4}</p>
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-foreground mb-3">
-                {t.certificates.title}
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {t.certificates.items.map((cert, index) => (
-                  <div key={index} className="relative group">
-                    <div className="px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium cursor-pointer hover:bg-primary/20 transition">
-                      {cert.name}
-                    </div>
-                    <div className="absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs opacity-0 group-hover:opacity-100 pointer-events-none transition">
-                      <div className="bg-card border border-border text-sm text-foreground rounded-lg shadow-lg px-3 py-2">
-                        <p className="font-semibold">{cert.name}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {cert.issuer}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {cert.date}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-center md:justify-end order-1 md:order-2">
-            <div className="relative group w-60 h-60">
-              <div className="absolute inset-0 rounded-xl border-2 border-primary translate-x-4 translate-y-4 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-300" />
-              <div className="relative w-full h-full rounded-xl overflow-hidden bg-primary/20">
+      <div className="max-w-6xl mx-auto">
+        <ScrollReveal>
+          <SectionHeading
+            index="01"
+            title={t.about.title}
+            subtitle={t.about.subtitle}
+          />
+        </ScrollReveal>
+
+        <div className="grid lg:grid-cols-[1.35fr_0.85fr] gap-10 lg:gap-14 items-start">
+          {/* Editorial Storytelling Column */}
+          <ScrollReveal delayMs={60} className="order-2 lg:order-1 space-y-5">
+            <p className="text-base sm:text-lg text-foreground/95 leading-relaxed font-medium">
+              {t.about.p1}
+            </p>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              {t.about.p2}
+            </p>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              {t.about.p3}
+            </p>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              {t.about.p4}
+            </p>
+          </ScrollReveal>
+
+          {/* Framed Portrait & Factual Snapshot */}
+          <ScrollReveal delayMs={120} className="order-1 lg:order-2 flex flex-col items-center lg:items-stretch gap-6">
+            <div className="relative group w-56 h-56 sm:w-64 sm:h-64 lg:w-full lg:max-w-[290px] lg:mx-auto lg:h-auto lg:aspect-square">
+              <div
+                aria-hidden="true"
+                className="absolute -inset-2 rounded-2xl bg-gradient-to-br from-primary/35 via-accent/20 to-transparent blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 rounded-2xl border border-primary/50 translate-x-3 translate-y-3 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-300"
+              />
+              <div className="relative w-full h-full rounded-2xl overflow-hidden border border-border bg-card shadow-xl">
                 <img
                   src={profile}
-                  alt="profile"
+                  alt="Wangprai Jullapech"
+                  width={290}
+                  height={290}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>
             </div>
-          </div>
+
+            <div className="w-full glass-card p-5 space-y-3.5">
+              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-primary">
+                {t.about.snapshot.title}
+              </p>
+              <dl className="space-y-3">
+                {snapshotItems.map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-start gap-3">
+                    <span className="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary shrink-0">
+                      <Icon size={14} aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <dt className="font-mono text-[11px] text-muted-foreground">
+                        {label}
+                      </dt>
+                      <dd className="text-xs sm:text-sm font-medium text-foreground leading-snug">
+                        {value}
+                      </dd>
+                    </div>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>
