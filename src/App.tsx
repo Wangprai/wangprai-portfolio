@@ -3,16 +3,19 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { PersonalDataProvider } from "./providers/PersonalDataProvider";
+import { CursorProvider } from "./providers/CursorProvider";
 
 const App = () => (
   <ThemeProvider>
     <PersonalDataProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <CursorProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </CursorProvider>
     </PersonalDataProvider>
   </ThemeProvider>
 );

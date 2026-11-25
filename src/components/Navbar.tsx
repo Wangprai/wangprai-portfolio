@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, Globe, Menu, Moon, Sun, X } from "lucide-react";
+import { FileText, Globe, Menu, MousePointer2, Moon, Sun, X } from "lucide-react";
+import { useCursorPreference } from "../hooks/useCursorPreference";
 import { usePersonalData } from "../hooks/usePersonalData";
 import { useTheme } from "../hooks/useTheme";
 
@@ -20,6 +21,7 @@ const Navbar = () => {
   const progressRef = useRef<HTMLDivElement>(null);
   const { lang, t, toggleLang } = usePersonalData();
   const { theme, toggleTheme } = useTheme();
+  const { enabled: cursorEnabled, toggleCursor } = useCursorPreference();
 
   const navItems = [
     { id: "about", label: t.nav.about, href: "#about" },
@@ -151,6 +153,22 @@ const Navbar = () => {
 
           {/* Desktop Controls */}
           <div className="hidden lg:flex items-center gap-2 shrink-0">
+            {/* Custom cursor toggle: only shown on fine-pointer (mouse) devices */}
+            <button
+              type="button"
+              onClick={toggleCursor}
+              aria-pressed={cursorEnabled}
+              aria-label={cursorEnabled ? t.nav.disableCursor : t.nav.enableCursor}
+              title={cursorEnabled ? t.nav.disableCursor : t.nav.enableCursor}
+              className={`hidden [@media(hover:hover)_and_(pointer:fine)]:inline-flex items-center justify-center w-9 h-9 rounded-xl border transition-all cursor-pointer ${
+                cursorEnabled
+                  ? "border-primary/55 bg-primary/10 text-primary"
+                  : "border-border/80 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/55 hover:bg-primary/10"
+              }`}
+            >
+              <MousePointer2 size={16} aria-hidden="true" />
+            </button>
+
             <button
               type="button"
               onClick={toggleTheme}

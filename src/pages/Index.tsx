@@ -5,7 +5,7 @@ import Education from "../components/Education";
 import Experience from "../components/Experience";
 import Footer from "../components/Footer";
 import Hero from "../components/Hero";
-import GlowCursor from "../components/motion/GlowCursor";
+import CustomCursor from "../components/motion/CustomCursor";
 import Navbar from "../components/Navbar";
 import Projects from "../components/Projects";
 import Skills from "../components/Skills";
@@ -17,7 +17,7 @@ const Index = () => {
 
   return (
     <div id="top" className="min-h-screen bg-background text-foreground relative">
-      <GlowCursor />
+      <CustomCursor />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:font-medium focus:shadow-lg"

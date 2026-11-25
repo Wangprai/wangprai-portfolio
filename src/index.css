@@ -641,166 +641,119 @@ html[lang="en"] body {
 }
 
 /* ------------------------------------------------------------------
- * Futuristic Violet Custom Cursor (Desktop Fine-Pointer Only)
+ * Custom Cursor (dot + easing ring) — desktop fine-pointer only.
+ * `html.custom-cursor-active` is toggled by CustomCursor.tsx only while the
+ * custom cursor is visible; it is always removed on leave/disable/unmount.
  * ------------------------------------------------------------------ */
 
-.cursor-aura {
-  width: 170px;
-  height: 170px;
-  border-radius: 9999px;
-  background: radial-gradient(
-    circle,
-    hsl(var(--violet-glow) / 0.16) 0%,
-    hsl(var(--accent) / 0.07) 38%,
-    transparent 72%
-  );
-  mix-blend-mode: screen;
-  transition: opacity 0.32s ease;
+html.custom-cursor-active,
+html.custom-cursor-active * {
+  cursor: none !important;
 }
 
-.light .cursor-aura {
-  mix-blend-mode: multiply;
-  background: radial-gradient(
-    circle,
-    hsl(var(--violet-glow) / 0.13) 0%,
-    hsl(var(--accent) / 0.05) 42%,
-    transparent 72%
-  );
+/* Preserve native cursors for text entry and editable content. */
+html.custom-cursor-active input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+html.custom-cursor-active textarea,
+html.custom-cursor-active [contenteditable=""],
+html.custom-cursor-active [contenteditable="true"] {
+  cursor: text !important;
 }
 
-.cursor-reticle {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: hsl(var(--primary));
-  transition: opacity 0.22s ease, color 0.25s ease;
-}
-
-.cursor-reticle-ring {
-  position: absolute;
+.custom-cursor {
+  pointer-events: none;
+  position: fixed;
   inset: 0;
-  border-radius: 9999px;
-  border: 1.5px solid hsl(var(--primary) / 0.68);
-  background: radial-gradient(
-    circle,
-    hsl(var(--primary) / 0.06) 0%,
-    transparent 70%
-  );
-  box-shadow:
-    0 0 0 1px hsl(var(--background) / 0.3),
-    0 0 18px hsl(var(--violet-glow) / 0.38),
-    inset 0 0 12px hsl(var(--violet-glow) / 0.16);
-  transition:
-    border-color 0.25s ease,
-    background-color 0.25s ease,
-    box-shadow 0.25s ease,
-    border-radius 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.cursor-reticle-orbit {
-  position: absolute;
-  inset: -4px;
-  border-radius: 9999px;
-  border: 1px dashed hsl(var(--accent) / 0.42);
-  animation: orbit-spin 12s linear infinite;
-  transition: opacity 0.25s ease, border-color 0.25s ease, inset 0.28s ease;
-}
-
-.cursor-reticle-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: hsl(var(--foreground));
+  z-index: 9999;
   opacity: 0;
-  transform: scale(0.75);
-  transition: opacity 0.22s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s ease;
 }
 
-.cursor-reticle[data-state="interactive"] .cursor-reticle-ring {
-  border-color: hsl(var(--primary));
-  background: hsl(var(--primary) / 0.12);
-  box-shadow:
-    0 0 0 1px hsl(var(--background) / 0.4),
-    0 0 26px hsl(var(--violet-glow) / 0.55),
-    inset 0 0 14px hsl(var(--violet-glow) / 0.26);
-}
-
-.cursor-reticle[data-state="interactive"] .cursor-reticle-orbit {
-  inset: -6px;
-  border-color: hsl(var(--primary) / 0.72);
-}
-
-.cursor-reticle[data-state="card"] .cursor-reticle-ring {
-  border-color: hsl(var(--accent));
-  background: hsl(var(--card) / 0.65);
-  backdrop-filter: blur(4px);
-  box-shadow:
-    0 0 0 1px hsl(var(--primary) / 0.3),
-    0 0 28px hsl(var(--violet-glow) / 0.52),
-    inset 0 0 16px hsl(var(--violet-glow) / 0.24);
-}
-
-.cursor-reticle[data-state="card"] .cursor-reticle-orbit {
-  opacity: 0.85;
-  inset: -5px;
-  border-color: hsl(var(--accent) / 0.75);
-}
-
-.cursor-reticle[data-state="card"] .cursor-reticle-label {
+.custom-cursor[data-visible="true"] {
   opacity: 1;
-  transform: scale(1);
 }
 
-.cursor-reticle[data-state="external"] .cursor-reticle-ring {
-  border-color: hsl(var(--cyan-spark));
-  background: hsl(var(--cyan-spark) / 0.1);
+.custom-cursor[data-visible="true"][data-state="text"] {
+  opacity: 0;
+}
+
+.custom-cursor-pos {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  will-change: transform;
+}
+
+.custom-cursor-dot,
+.custom-cursor-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%) scale(1);
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.custom-cursor-dot {
+  width: 8px;
+  height: 8px;
+  background: hsl(var(--primary));
+  /* Halo keeps the dot visible on both light and dark backgrounds. */
   box-shadow:
-    0 0 24px hsl(var(--cyan-spark) / 0.45),
-    inset 0 0 12px hsl(var(--primary) / 0.25);
+    0 0 0 1.5px hsl(var(--background) / 0.9),
+    0 0 0 2.5px hsl(var(--primary) / 0.35);
 }
 
-.cursor-reticle[data-pressed="true"] .cursor-reticle-ring {
+.custom-cursor-ring {
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid hsl(var(--primary) / 0.7);
+  box-shadow:
+    0 0 0 1px hsl(var(--background) / 0.35),
+    inset 0 0 0 1px hsl(var(--background) / 0.2);
+}
+
+/* Interactive: enlarge ring, shrink dot, fill softly. */
+.custom-cursor[data-state="interactive"] .custom-cursor-ring {
+  transform: translate(-50%, -50%) scale(1.45);
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.14);
+}
+
+.custom-cursor[data-state="interactive"] .custom-cursor-dot {
+  transform: translate(-50%, -50%) scale(0.7);
+}
+
+.custom-cursor[data-state="card"] .custom-cursor-ring {
+  transform: translate(-50%, -50%) scale(1.85);
   border-color: hsl(var(--accent));
-  background: hsl(var(--primary) / 0.22);
-  box-shadow:
-    0 0 32px hsl(var(--accent) / 0.7),
-    inset 0 0 18px hsl(var(--primary) / 0.35);
+  background: hsl(var(--primary) / 0.1);
 }
 
-.cursor-core {
-  width: 7px;
-  height: 7px;
-  border-radius: 2px;
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-  box-shadow:
-    0 0 0 2px hsl(var(--background) / 0.55),
-    0 0 12px hsl(var(--violet-glow) / 0.9);
-  transition: opacity 0.2s ease, border-radius 0.2s ease;
+.custom-cursor[data-state="card"] .custom-cursor-dot {
+  transform: translate(-50%, -50%) scale(0.6);
 }
 
-.light .cursor-reticle-ring {
-  border-color: hsl(var(--primary) / 0.72);
-  box-shadow:
-    0 0 0 1px hsl(0 0% 100% / 0.75),
-    0 0 16px hsl(var(--violet-glow) / 0.26),
-    inset 0 0 8px hsl(var(--violet-glow) / 0.12);
+/* Click: brief scale-down. */
+.custom-cursor[data-pressed="true"] .custom-cursor-ring {
+  transform: translate(-50%, -50%) scale(0.8);
+  background: hsl(var(--primary) / 0.2);
 }
 
-.light .cursor-reticle[data-state="card"] .cursor-reticle-ring {
-  background: hsl(0 0% 100% / 0.82);
-  box-shadow:
-    0 0 0 1px hsl(var(--primary) / 0.35),
-    0 0 22px hsl(var(--violet-glow) / 0.28);
+.custom-cursor[data-pressed="true"] .custom-cursor-dot {
+  transform: translate(-50%, -50%) scale(0.75);
 }
 
-.light .cursor-core {
+.light .custom-cursor-dot {
   box-shadow:
-    0 0 0 2px hsl(0 0% 100% / 0.85),
-    0 0 10px hsl(var(--violet-glow) / 0.65);
+    0 0 0 1.5px hsl(0 0% 100% / 0.95),
+    0 0 0 2.5px hsl(var(--primary) / 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
