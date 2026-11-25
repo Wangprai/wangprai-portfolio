@@ -28,7 +28,7 @@ const Skills = () => {
       colSpan: "md:col-span-7",
       featured: true,
       accentBar: "from-accent via-primary to-sky-400/70",
-      skills: ["React", "Node.js", "Express", "Elysia.js (Bun)", "Tailwind CSS", "FastAPI"],
+      skills: ["React", "Next.js", "Node.js", "Express.js", "Elysia.js (Bun)", "NestJS", "Tailwind CSS", "FastAPI"],
     },
     {
       id: "tools",
@@ -37,7 +37,7 @@ const Skills = () => {
       colSpan: "md:col-span-6",
       featured: false,
       accentBar: "from-primary/70 via-border to-transparent",
-      skills: ["Git", "Docker", "Hugging Face", "PostgreSQL", "Oracle", "JWT"],
+      skills: ["Git", "Docker", "Hugging Face", "PostgreSQL", "Oracle", "MongoDB", "JWT"],
     },
     {
       id: "dsaiframeworks",
@@ -50,7 +50,7 @@ const Skills = () => {
     },
   ];
 
-  const learningSkills = ["Go", "Next.js", "NestJS"];
+  const learningSkills = ["Go", "Go-fiber"];
 
   return (
     <section id="skills" className="section-horizon section-padding relative overflow-hidden">

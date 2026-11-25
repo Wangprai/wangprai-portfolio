@@ -26,7 +26,7 @@ export const translations = {
       greeting: "Hi, my name is",
       name: "Wangprai Jullapech",
       tagline: "Software Engineer",
-      subTagline: "Frontend, Backend & Full Stack Development — with a foundation in Data Science & AI",
+      subTagline: "Software Development — with a foundation in Data Science & AI",
       description:
         "Computer Science graduate from Khon Kaen University focused on building reliable web applications across frontend and backend stacks, backed by hands-on internship experience and applied Data Science & AI projects.",
       focusAreas: ["Frontend", "Backend", "Full Stack", "Data Science & AI"],
@@ -214,7 +214,7 @@ export const translations = {
       greeting: "สวัสดีครับ ผมชื่อ",
       name: "วังไพร จุลเพชร",
       tagline: "Software Engineer",
-      subTagline: "พัฒนาเว็บแอปพลิเคชันทั้ง Frontend, Backend และ Full Stack พร้อมพื้นฐานด้าน Data Science และ AI",
+      subTagline: "พัฒนาซอฟต์แวร์ พร้อมทั้งมีพื้นฐานทางด้าน Data Science และ AI",
       description:
         "บัณฑิตวิทยาการคอมพิวเตอร์ มหาวิทยาลัยขอนแก่น มุ่งพัฒนาเว็บแอปพลิเคชันที่เชื่อถือได้ทั้งฝั่ง Frontend และ Backend ต่อยอดจากประสบการณ์ฝึกงานจริงและโปรเจกต์ด้าน Data Science และ AI พร้อมเรียนรู้เทคโนโลยีใหม่ ๆ อยู่เสมอ",
       focusAreas: ["Frontend", "Backend", "Full Stack", "Data Science & AI"],
