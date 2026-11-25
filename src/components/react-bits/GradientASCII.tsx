@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react';
+import { memo, useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react';
 import './GradientASCII.css';
 
 export type GradientASCIIShape = 'horizon' | 'pinch' | 'rise' | 'eclipse';
@@ -121,8 +121,10 @@ uniform float uSoftness;
 uniform float uFlow;
 uniform vec2 uSeed;
 uniform vec4 uTrail[24];
+uniform int uTrailCount;
 uniform float uRadius;
 uniform vec4 uClicks[4];
+uniform int uClickCount;
 uniform int uClickEffect;
 uniform float uIntro;
 uniform float uFrame;
@@ -242,12 +244,14 @@ void main() {
 
   float scramble = 0.0;
   for (int i = 0; i < 24; i++) {
+    if (i >= uTrailCount) break;
     vec4 point = uTrail[i];
     if (point.z <= 0.0) continue;
     vec2 d = p - point.xy;
     scramble = max(scramble, point.z * exp(-dot(d, d) / (uRadius * uRadius)));
   }
   for (int i = 0; i < 4; i++) {
+    if (i >= uClickCount) break;
     vec4 c = uClicks[i];
     if (c.w <= 0.0) continue;
     float d = length(p - c.xy);
@@ -528,32 +532,52 @@ const GradientASCII = ({
   const onReadyRef = useRef(onReady);
   const onErrorRef = useRef(onError);
   const palette = (Array.isArray(colors) && colors.length ? colors : DEFAULT_COLORS).slice(0, MAX_COLORS);
-  const settings: Settings = {
-    colors: palette.length > 1 ? palette : [palette[0], palette[0]],
-    shape: SHAPES[shape] ?? 0,
-    characters: characters || DEFAULT_CHARACTERS,
-    cellSize: clamp(cellSize, 6, 64),
-    density: clamp(density, 0, 1),
-    glyphOpacity: clamp(glyphOpacity, 0, 1),
-    glow: clamp(glow, 0, 2),
-    depthOfField: clamp(depthOfField, 0, 1),
-    flicker: clamp(flicker, 0, 1),
-    softness: clamp(softness, 0, 1),
-    scale: clamp(scale, 0.4, 2.5),
-    flow: clamp(flow, 0, 2),
-    speed: Math.max(0, speed),
-    gradientOpacity: clamp(gradientOpacity, 0, 1),
-    grain: clamp(grain, 0, 0.4),
-    variation: Math.max(0, variation),
+  const resolvedColors = palette.length > 1 ? palette : [palette[0], palette[0]];
+  const colorsKey = resolvedColors.join(',');
+  const resolvedShape = SHAPES[shape] ?? 0;
+  const resolvedCharacters = characters || DEFAULT_CHARACTERS;
+  const resolvedCellSize = clamp(cellSize, 6, 64);
+  const resolvedDensity = clamp(density, 0, 1);
+  const resolvedGlyphOpacity = clamp(glyphOpacity, 0, 1);
+  const resolvedGlow = clamp(glow, 0, 2);
+  const resolvedDepthOfField = clamp(depthOfField, 0, 1);
+  const resolvedFlicker = clamp(flicker, 0, 1);
+  const resolvedSoftness = clamp(softness, 0, 1);
+  const resolvedScale = clamp(scale, 0.4, 2.5);
+  const resolvedFlow = clamp(flow, 0, 2);
+  const resolvedSpeed = Math.max(0, speed);
+  const resolvedGradientOpacity = clamp(gradientOpacity, 0, 1);
+  const resolvedGrain = clamp(grain, 0, 0.4);
+  const resolvedVariation = Math.max(0, variation);
+  const resolvedScrambleRadius = clamp(scrambleRadius, 0.02, 0.4);
+  const resolvedClickEffect = CLICK_EFFECTS[clickEffect] ?? 1;
+  const resolvedFontFamily = fontFamily || DEFAULT_FONT;
+
+  const settingsRef = useRef<Settings>({
+    colors: resolvedColors,
+    shape: resolvedShape,
+    characters: resolvedCharacters,
+    cellSize: resolvedCellSize,
+    density: resolvedDensity,
+    glyphOpacity: resolvedGlyphOpacity,
+    glow: resolvedGlow,
+    depthOfField: resolvedDepthOfField,
+    flicker: resolvedFlicker,
+    softness: resolvedSoftness,
+    scale: resolvedScale,
+    flow: resolvedFlow,
+    speed: resolvedSpeed,
+    gradientOpacity: resolvedGradientOpacity,
+    grain: resolvedGrain,
+    variation: resolvedVariation,
     mouseInteraction,
-    scrambleRadius: clamp(scrambleRadius, 0.02, 0.4),
-    clickEffect: CLICK_EFFECTS[clickEffect] ?? 1,
+    scrambleRadius: resolvedScrambleRadius,
+    clickEffect: resolvedClickEffect,
     intro,
     lightMode,
-    fontFamily: fontFamily || DEFAULT_FONT,
+    fontFamily: resolvedFontFamily,
     dpr
-  };
-  const settingsRef = useRef(settings);
+  });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -612,7 +636,7 @@ const GradientASCII = ({
     const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     let reduce = motionQuery?.matches ?? false;
     let readyNotified = false;
-    const view = { width: 1, height: 1, ratio: 1 };
+    const view = { width: 0, height: 0, ratio: 0 };
     const ramp = new Float32Array(MAX_COLORS * 3);
     const clickData = new Float32Array(MAX_CLICKS * 4);
     const clicks: Point[] = [];
@@ -628,8 +652,9 @@ const GradientASCII = ({
     let frameSeed = 0;
     let grainClock = 0;
     let raf = 0;
+    let resizeRaf = 0;
     let last = 0;
-    let visible = true;
+    let visible = typeof IntersectionObserver === 'undefined';
     let disposed = false;
     let ready = !parallel;
 
@@ -657,7 +682,7 @@ const GradientASCII = ({
           if (disposed || atlasKey !== key) return;
           if (atlas) gl.deleteTexture(atlas.texture);
           atlas = buildAtlas(gl, s.characters, s.fontFamily);
-          draw();
+          if (ready && (visible || !readyNotified)) draw();
         },
         () => {}
       );
@@ -728,8 +753,10 @@ const GradientASCII = ({
       gl.uniform1f(fu.uFlow, s.flow);
       gl.uniform2f(fu.uSeed, s.variation * 3.17, s.variation * 1.91);
       gl.uniform4fv(fu.uTrail, trailData);
+      gl.uniform1i(fu.uTrailCount, trail.length);
       gl.uniform1f(fu.uRadius, s.scrambleRadius);
       gl.uniform4fv(fu.uClicks, clickData);
+      gl.uniform1i(fu.uClickCount, clicks.length);
       gl.uniform1i(fu.uClickEffect, s.clickEffect);
       gl.uniform1f(fu.uIntro, introClock);
       gl.uniform1f(fu.uFrame, frameSeed);
@@ -779,11 +806,25 @@ const GradientASCII = ({
 
     const resize = () => {
       const s = settingsRef.current;
-      view.width = Math.max(1, container.clientWidth);
-      view.height = Math.max(1, container.clientHeight);
-      view.ratio = Math.min(s.dpr || window.devicePixelRatio || 1, 2);
-      canvas.width = Math.max(1, Math.round(view.width * view.ratio));
-      canvas.height = Math.max(1, Math.round(view.height * view.ratio));
+      const nextWidth = Math.max(1, container.clientWidth);
+      const nextHeight = Math.max(1, container.clientHeight);
+      const nextRatio = Math.min(window.devicePixelRatio || 1, s.dpr ?? 2);
+      const nextCanvasW = Math.max(1, Math.round(nextWidth * nextRatio));
+      const nextCanvasH = Math.max(1, Math.round(nextHeight * nextRatio));
+      if (
+        nextWidth === view.width &&
+        nextHeight === view.height &&
+        nextRatio === view.ratio &&
+        canvas.width === nextCanvasW &&
+        canvas.height === nextCanvasH
+      ) {
+        return;
+      }
+      view.width = nextWidth;
+      view.height = nextHeight;
+      view.ratio = nextRatio;
+      canvas.width = nextCanvasW;
+      canvas.height = nextCanvasH;
       sizeTarget(
         gl,
         fieldTarget,
@@ -794,43 +835,57 @@ const GradientASCII = ({
       const haloHeight = Math.max(1, Math.round(canvas.height / 4));
       sizeTarget(gl, haloA, haloWidth, haloHeight);
       sizeTarget(gl, haloB, haloWidth, haloHeight);
-      draw();
+      if (ready && (visible || !readyNotified)) {
+        draw();
+      }
       wake();
     };
 
+    const scheduleResize = () => {
+      if (resizeRaf || disposed) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        if (!disposed) resize();
+      });
+    };
+
     const updateInput = (dt: number) => {
-      trail.forEach(point => {
-        point.age += dt;
-      });
-      while (trail.length && trail[trail.length - 1].age > TRAIL_LIFE) trail.pop();
-      for (let i = 0; i < MAX_TRAIL; i++) {
-        const point = trail[i];
-        if (!point) {
-          trailData[i * 4 + 2] = 0;
-          continue;
+      if (trail.length > 0) {
+        for (let i = 0; i < trail.length; i++) {
+          trail[i].age += dt;
         }
-        const k = 1 - point.age / TRAIL_LIFE;
-        trailData.set([point.x, point.y, k * k, 0], i * 4);
+        while (trail.length && trail[trail.length - 1].age > TRAIL_LIFE) trail.pop();
+        for (let i = 0; i < trail.length; i++) {
+          const point = trail[i];
+          const k = 1 - point.age / TRAIL_LIFE;
+          const offset = i * 4;
+          trailData[offset] = point.x;
+          trailData[offset + 1] = point.y;
+          trailData[offset + 2] = k * k;
+          trailData[offset + 3] = 0;
+        }
       }
-      clicks.forEach(click => {
-        click.age += dt;
-      });
-      while (clicks.length && clicks[clicks.length - 1].age > CLICK_LIFE) clicks.pop();
-      for (let i = 0; i < MAX_CLICKS; i++) {
-        const click = clicks[i];
-        if (!click) {
-          clickData[i * 4 + 3] = 0;
-          continue;
+      if (clicks.length > 0) {
+        for (let i = 0; i < clicks.length; i++) {
+          clicks[i].age += dt;
         }
-        const k = click.age / CLICK_LIFE;
-        const envelope = Math.min(1, click.age / 0.08) * (1 - k) * (1 - k);
-        clickData.set([click.x, click.y, click.age, envelope], i * 4);
+        while (clicks.length && clicks[clicks.length - 1].age > CLICK_LIFE) clicks.pop();
+        for (let i = 0; i < clicks.length; i++) {
+          const click = clicks[i];
+          const k = click.age / CLICK_LIFE;
+          const envelope = Math.min(1, click.age / 0.08) * (1 - k) * (1 - k);
+          const offset = i * 4;
+          clickData[offset] = click.x;
+          clickData[offset + 1] = click.y;
+          clickData[offset + 2] = click.age;
+          clickData[offset + 3] = envelope;
+        }
       }
     };
 
     const frame = (now: number) => {
       raf = 0;
-      if (disposed || !visible || document.hidden) return;
+      if (disposed || document.hidden) return;
       if (!ready) {
         if (!gl.isContextLost() && !linked()) {
           raf = requestAnimationFrame(frame);
@@ -842,6 +897,13 @@ const GradientASCII = ({
           return;
         }
         ready = true;
+      }
+      if (!visible) {
+        if (!readyNotified) {
+          draw();
+        }
+        last = 0;
+        return;
       }
       const s = settingsRef.current;
       const dt = last ? clamp((now - last) / 1000, 0.001, 0.05) : 1 / 60;
@@ -864,7 +926,9 @@ const GradientASCII = ({
     };
 
     function wake() {
-      if (!raf && !disposed && visible && !document.hidden) raf = requestAnimationFrame(frame);
+      if (!raf && !disposed && !document.hidden && (visible || !readyNotified)) {
+        raf = requestAnimationFrame(frame);
+      }
     }
 
     const locate = (event: PointerEvent) => {
@@ -878,9 +942,10 @@ const GradientASCII = ({
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      locate(event);
       const s = settingsRef.current;
-      if (!pointer.inside || !s.mouseInteraction || reduce) return;
+      if (!visible || !s.mouseInteraction || reduce) return;
+      locate(event);
+      if (!pointer.inside) return;
       const head = trail[0];
       const gap = head ? Math.hypot(pointer.x - head.x, pointer.y - head.y) : Infinity;
       if (gap < TRAIL_STEP) return;
@@ -897,9 +962,10 @@ const GradientASCII = ({
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      locate(event);
       const s = settingsRef.current;
-      if (!pointer.inside || !s.clickEffect || reduce) return;
+      if (!visible || !s.clickEffect || reduce) return;
+      locate(event);
+      if (!pointer.inside) return;
       clicks.unshift({ x: pointer.x, y: pointer.y, age: 0 });
       if (clicks.length > MAX_CLICKS) clicks.pop();
       wake();
@@ -923,7 +989,7 @@ const GradientASCII = ({
       onErrorRef.current?.();
     };
 
-    const resizeObserver = new ResizeObserver(resize);
+    const resizeObserver = new ResizeObserver(scheduleResize);
     resizeObserver.observe(container);
     const intersection = new IntersectionObserver(entries => {
       visible = entries.some(entry => entry.isIntersecting);
@@ -939,12 +1005,23 @@ const GradientASCII = ({
     motionQuery?.addEventListener?.('change', onMotionChange);
     canvas.addEventListener('webglcontextlost', onContextLost);
     resize();
-    wakeRef.current = wake;
+    let lastDpr = settingsRef.current.dpr;
+    wakeRef.current = () => {
+      const s = settingsRef.current;
+      if (s.dpr !== lastDpr) {
+        lastDpr = s.dpr;
+        resize();
+        return;
+      }
+      if (!raf && ready && visible) draw();
+      wake();
+    };
 
     const dispose = () => {
       if (disposed) return;
       disposed = true;
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(resizeRaf);
       wakeRef.current = null;
       resizeObserver.disconnect();
       intersection.disconnect();
@@ -971,11 +1048,63 @@ const GradientASCII = ({
   }, []);
 
   useEffect(() => {
-    settingsRef.current = settings;
     onReadyRef.current = onReady;
     onErrorRef.current = onError;
+  }, [onReady, onError]);
+
+  useEffect(() => {
+    settingsRef.current = {
+      colors: resolvedColors,
+      shape: resolvedShape,
+      characters: resolvedCharacters,
+      cellSize: resolvedCellSize,
+      density: resolvedDensity,
+      glyphOpacity: resolvedGlyphOpacity,
+      glow: resolvedGlow,
+      depthOfField: resolvedDepthOfField,
+      flicker: resolvedFlicker,
+      softness: resolvedSoftness,
+      scale: resolvedScale,
+      flow: resolvedFlow,
+      speed: resolvedSpeed,
+      gradientOpacity: resolvedGradientOpacity,
+      grain: resolvedGrain,
+      variation: resolvedVariation,
+      mouseInteraction,
+      scrambleRadius: resolvedScrambleRadius,
+      clickEffect: resolvedClickEffect,
+      intro,
+      lightMode,
+      fontFamily: resolvedFontFamily,
+      dpr
+    };
     wakeRef.current?.();
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    colorsKey,
+    resolvedShape,
+    resolvedCharacters,
+    resolvedCellSize,
+    resolvedDensity,
+    resolvedGlyphOpacity,
+    resolvedGlow,
+    resolvedDepthOfField,
+    resolvedFlicker,
+    resolvedSoftness,
+    resolvedScale,
+    resolvedFlow,
+    resolvedSpeed,
+    resolvedGradientOpacity,
+    resolvedGrain,
+    resolvedVariation,
+    mouseInteraction,
+    resolvedScrambleRadius,
+    resolvedClickEffect,
+    intro,
+    lightMode,
+    resolvedFontFamily,
+    dpr
+  ]);
 
   return (
     <div
@@ -989,4 +1118,4 @@ const GradientASCII = ({
   );
 };
 
-export default GradientASCII;
+export default memo(GradientASCII);

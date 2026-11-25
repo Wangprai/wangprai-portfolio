@@ -1,9 +1,11 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { PersonalDataProvider } from "./providers/PersonalDataProvider";
 import { CursorProvider } from "./providers/CursorProvider";
+
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const App = () => (
   <ThemeProvider>
@@ -12,7 +14,14 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
+            <Route
+              path="*"
+              element={
+                <Suspense fallback={null}>
+                  <NotFound />
+                </Suspense>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </CursorProvider>

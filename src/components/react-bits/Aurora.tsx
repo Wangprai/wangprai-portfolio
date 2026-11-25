@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { memo, useEffect, useRef, type CSSProperties } from 'react';
 
 export interface AuroraProps {
   colorStops?: string[];
@@ -283,31 +283,79 @@ const Aurora = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wakeRef = useRef<(() => void) | null>(null);
   const stops = (Array.isArray(colorStops) ? colorStops : []).filter(Boolean).map(String).slice(0, MAX_STOPS);
-  const settings: Settings = {
-    stops: stops.length >= 2 ? stops : stops.length === 1 ? [stops[0], stops[0]] : ['#5227FF', '#7cff67'],
-    amplitude: Math.max(0, amplitude),
-    blend: clamp(blend, 0, 1),
+  const resolvedStops = stops.length >= 2 ? stops : stops.length === 1 ? [stops[0], stops[0]] : ['#5227FF', '#7cff67'];
+  const stopsKey = resolvedStops.join(',');
+  const clampedAmplitude = Math.max(0, amplitude);
+  const clampedBlend = clamp(blend, 0, 1);
+  const clampedHeight = clamp(height, 0, 1);
+  const clampedScale = Math.max(0.1, scale);
+  const clampedGlow = Math.max(0, glow);
+  const clampedBrightness = Math.max(0, brightness);
+  const clampedLayers = clamp(Math.round(layers), 1, MAX_LAYERS);
+  const flip = direction === 'bottom' ? 1 : 0;
+  const clampedOpacity = clamp(opacity, 0, 1);
+
+  const settingsRef = useRef<Settings>({
+    stops: resolvedStops,
+    amplitude: clampedAmplitude,
+    blend: clampedBlend,
     speed,
     time,
-    height: clamp(height, 0, 1),
-    scale: Math.max(0.1, scale),
-    glow: Math.max(0, glow),
-    brightness: Math.max(0, brightness),
-    layers: clamp(Math.round(layers), 1, MAX_LAYERS),
-    flip: direction === 'bottom' ? 1 : 0,
+    height: clampedHeight,
+    scale: clampedScale,
+    glow: clampedGlow,
+    brightness: clampedBrightness,
+    layers: clampedLayers,
+    flip,
     mouseInteraction,
     intro,
-    opacity: clamp(opacity, 0, 1),
+    opacity: clampedOpacity,
     lightMode,
     paused,
     dpr
-  };
-  const settingsRef = useRef(settings);
+  });
 
   useEffect(() => {
-    settingsRef.current = settings;
+    settingsRef.current = {
+      stops: resolvedStops,
+      amplitude: clampedAmplitude,
+      blend: clampedBlend,
+      speed,
+      time,
+      height: clampedHeight,
+      scale: clampedScale,
+      glow: clampedGlow,
+      brightness: clampedBrightness,
+      layers: clampedLayers,
+      flip,
+      mouseInteraction,
+      intro,
+      opacity: clampedOpacity,
+      lightMode,
+      paused,
+      dpr
+    };
     wakeRef.current?.();
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    stopsKey,
+    clampedAmplitude,
+    clampedBlend,
+    speed,
+    time,
+    clampedHeight,
+    clampedScale,
+    clampedGlow,
+    clampedBrightness,
+    clampedLayers,
+    flip,
+    mouseInteraction,
+    intro,
+    clampedOpacity,
+    lightMode,
+    paused,
+    dpr
+  ]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -334,7 +382,8 @@ const Aurora = ({
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
     const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    let reduce = motionQuery?.matches ?? false;
     const cache = new Map<string, number[]>();
     const parse = (value: string): number[] => {
       const cached = cache.get(value);
@@ -352,8 +401,16 @@ const Aurora = ({
       return rgb;
     };
     const palette = new Float32Array(MAX_STOPS * 3);
+    let paletteKey = '';
 
-    const view = { width: 1, height: 1 };
+    const syncPalette = (stopsList: string[]) => {
+      const key = stopsList.join(',');
+      if (key === paletteKey) return;
+      paletteKey = key;
+      unwrapHues(stopsList.map(value => toOklch(parse(value)))).forEach((stop, index) => palette.set(stop, index * 3));
+    };
+
+    const view = { width: 0, height: 0, ratio: 0 };
     const pointer = { x: 0, y: 0, inside: false };
     const state = {
       clock: 0,
@@ -363,12 +420,13 @@ const Aurora = ({
       reveal: settingsRef.current.intro && !reduce ? 0 : 1
     };
     let raf = 0;
+    let resizeRaf = 0;
     let last = 0;
     let visible = true;
 
     const render = () => {
       const s = settingsRef.current;
-      unwrapHues(s.stops.map(value => toOklch(parse(value)))).forEach((stop, index) => palette.set(stop, index * 3));
+      syncPalette(s.stops);
       const reveal = state.reveal;
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.useProgram(program.program);
@@ -398,15 +456,14 @@ const Aurora = ({
       const s = settingsRef.current;
       const dt = last ? clamp((now - last) / 1000, 0.0005, 0.05) : 1 / 60;
       last = now;
-      if (s.paused) {
+      if (s.paused || reduce) {
         state.reveal = 1;
         render();
         last = 0;
         return;
       }
-      const motion = reduce ? 0 : 1;
-      state.clock += dt * s.speed * motion;
-      const engaged = s.mouseInteraction && pointer.inside && !reduce;
+      state.clock += dt * s.speed;
+      const engaged = s.mouseInteraction && pointer.inside;
       const follow = 1 - Math.exp(-dt / 0.6);
       if (engaged) {
         const tx = (pointer.x - view.width / 2) / view.height;
@@ -415,7 +472,7 @@ const Aurora = ({
         state.py += (ty - state.py) * follow;
       }
       state.reach += ((engaged ? 1 : 0) - state.reach) * (1 - Math.exp(-dt / (engaged ? 0.9 : 1.4)));
-      if (!s.intro || reduce) state.reveal = 1;
+      if (!s.intro) state.reveal = 1;
       else if (state.reveal < 1) state.reveal = Math.min(1, state.reveal + dt / INTRO_SECONDS);
       render();
       raf = requestAnimationFrame(frame);
@@ -429,27 +486,48 @@ const Aurora = ({
       const s = settingsRef.current;
       const width = Math.max(1, container.clientWidth);
       const height = Math.max(1, container.clientHeight);
-      const ratio = Math.min(s.dpr || window.devicePixelRatio || 1, 2);
+      const ratio = Math.min(window.devicePixelRatio || 1, s.dpr ?? 2);
+      const nextCanvasW = Math.max(1, Math.round(width * ratio));
+      const nextCanvasH = Math.max(1, Math.round(height * ratio));
+      if (
+        width === view.width &&
+        height === view.height &&
+        ratio === view.ratio &&
+        canvas.width === nextCanvasW &&
+        canvas.height === nextCanvasH
+      ) {
+        return;
+      }
       view.width = width;
       view.height = height;
-      canvas.width = Math.max(1, Math.round(width * ratio));
-      canvas.height = Math.max(1, Math.round(height * ratio));
-      render();
+      view.ratio = ratio;
+      canvas.width = nextCanvasW;
+      canvas.height = nextCanvasH;
+      if (visible) render();
       wake();
     };
 
+    const scheduleResize = () => {
+      if (resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        resize();
+      });
+    };
+
     const onPointerMove = (event: PointerEvent) => {
+      const s = settingsRef.current;
+      if (!visible || !s.mouseInteraction || reduce) return;
       const rect = container.getBoundingClientRect();
       pointer.x = event.clientX - rect.left;
       pointer.y = event.clientY - rect.top;
       const wasInside = pointer.inside;
       pointer.inside = pointer.x >= 0 && pointer.y >= 0 && pointer.x <= rect.width && pointer.y <= rect.height;
       if (pointer.inside && !wasInside) {
-        const s = settingsRef.current;
         state.px = (pointer.x - rect.width / 2) / Math.max(1, rect.height);
         state.py = s.flip ? 1 - pointer.y / Math.max(1, rect.height) : pointer.y / Math.max(1, rect.height);
       }
-      if (!settingsRef.current.paused) wake();
+      if (!s.paused) wake();
     };
 
     const onPointerUp = (event: PointerEvent) => {
@@ -465,7 +543,13 @@ const Aurora = ({
       wake();
     };
 
-    const resizeObserver = new ResizeObserver(resize);
+    const onMotionChange = (event: MediaQueryListEvent) => {
+      reduce = event.matches;
+      last = 0;
+      wake();
+    };
+
+    const resizeObserver = new ResizeObserver(scheduleResize);
     resizeObserver.observe(container);
     const intersection = new IntersectionObserver(entries => {
       visible = entries.some(entry => entry.isIntersecting);
@@ -481,6 +565,7 @@ const Aurora = ({
     window.addEventListener('pointercancel', onPointerUp, { passive: true });
     document.documentElement.addEventListener('pointerleave', onPointerLeave);
     document.addEventListener('visibilitychange', onVisibility);
+    motionQuery?.addEventListener?.('change', onMotionChange);
     resize();
 
     let lastDpr = settingsRef.current.dpr;
@@ -491,12 +576,13 @@ const Aurora = ({
         resize();
         return;
       }
-      if (!raf) render();
+      if (!raf && visible) render();
       wake();
     };
 
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(resizeRaf);
       wakeRef.current = null;
       resizeObserver.disconnect();
       intersection.disconnect();
@@ -506,6 +592,7 @@ const Aurora = ({
       window.removeEventListener('pointercancel', onPointerUp);
       document.documentElement.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
+      motionQuery?.removeEventListener?.('change', onMotionChange);
       gl.deleteProgram(program.program);
       gl.deleteBuffer(buffer);
       gl.deleteVertexArray(vao);
@@ -524,4 +611,4 @@ const Aurora = ({
   );
 };
 
-export default Aurora;
+export default memo(Aurora);

@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
-
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -853,4 +851,11 @@ html.custom-cursor-active [contenteditable="true"] {
   .skills-panel {
     animation: none;
   }
+}
+
+/* Pause infinite decorative CSS animations while scrolled out of view */
+[data-offscreen="true"].border-beam::before,
+[data-offscreen="true"].shiny-text,
+[data-offscreen="true"] .pause-offscreen {
+  animation-play-state: paused !important;
 }

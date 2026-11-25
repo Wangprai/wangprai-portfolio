@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 /**
  * ParticlesField — dependency-free adaptation of React Bits "Particles"
@@ -21,9 +21,19 @@ interface Particle {
   vx: number;
   vy: number;
   radius: number;
-  alpha: number;
-  hueShift: number;
+  darkColor: string;
+  lightColor: string;
 }
+
+const LINE_BUCKETS = 8;
+const DARK_LINE_STYLES = Array.from({ length: LINE_BUCKETS }, (_, idx) => {
+  const alpha = ((idx + 0.5) / LINE_BUCKETS) * 0.19;
+  return `rgba(167, 139, 250, ${alpha.toFixed(3)})`;
+});
+const LIGHT_LINE_STYLES = Array.from({ length: LINE_BUCKETS }, (_, idx) => {
+  const alpha = ((idx + 0.5) / LINE_BUCKETS) * 0.14;
+  return `rgba(124, 58, 237, ${alpha.toFixed(3)})`;
+});
 
 const ParticlesField = ({
   theme,
@@ -34,9 +44,11 @@ const ParticlesField = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const themeRef = useRef(theme);
+  const redrawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     themeRef.current = theme;
+    redrawRef.current?.();
   }, [theme]);
 
   useEffect(() => {
@@ -45,32 +57,50 @@ const ParticlesField = ({
     const ctx = canvas?.getContext("2d");
     if (!container || !canvas || !ctx || typeof window === "undefined") return;
 
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const motionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    let reduced = motionQuery?.matches ?? false;
     const finePointer = window.matchMedia?.("(hover: hover) and (pointer: fine)").matches ?? false;
 
-    let width = 1;
-    let height = 1;
-    let dpr = 1;
+    let width = 0;
+    let height = 0;
+    let dpr = 0;
     let raf = 0;
-    let visible = true;
+    let resizeRaf = 0;
+    let visible = typeof IntersectionObserver === "undefined";
     const pointer = { x: -9999, y: -9999, active: false };
     let particles: Particle[] = [];
+    const buckets: number[][] = Array.from({ length: LINE_BUCKETS }, () => []);
 
     const seedParticles = () => {
       const mobileScale = width < 768 ? 0.55 : 1;
       const targetCount = Math.max(14, Math.round(count * mobileScale));
-      particles = Array.from({ length: targetCount }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.28,
-        vy: (Math.random() - 0.5) * 0.28,
-        radius: Math.random() * 1.6 + 0.75,
-        alpha: Math.random() * 0.5 + 0.25,
-        hueShift: Math.random(),
-      }));
+      particles = Array.from({ length: targetCount }, () => {
+        const alpha = Math.random() * 0.5 + 0.25;
+        const hueShift = Math.random();
+        const lightColor =
+          hueShift > 0.65
+            ? `rgba(124, 58, 237, ${(alpha * 0.55).toFixed(2)})`
+            : `rgba(139, 92, 246, ${(alpha * 0.45).toFixed(2)})`;
+        const darkColor =
+          hueShift > 0.72
+            ? `rgba(192, 132, 252, ${(alpha * 0.9).toFixed(2)})`
+            : hueShift > 0.35
+              ? `rgba(167, 139, 250, ${(alpha * 0.85).toFixed(2)})`
+              : `rgba(125, 211, 252, ${(alpha * 0.65).toFixed(2)})`;
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.28,
+          vy: (Math.random() - 0.5) * 0.28,
+          radius: Math.random() * 1.6 + 0.75,
+          darkColor,
+          lightColor,
+        };
+      });
     };
 
     const drawFrame = (animate: boolean) => {
+      if (width <= 0 || height <= 0) return;
       ctx.clearRect(0, 0, width, height);
       const isLight = themeRef.current === "light";
 
@@ -99,27 +129,21 @@ const ParticlesField = ({
           }
         }
 
-        const nodeColor = isLight
-          ? p.hueShift > 0.65
-            ? `rgba(124, 58, 237, ${(p.alpha * 0.55).toFixed(2)})`
-            : `rgba(139, 92, 246, ${(p.alpha * 0.45).toFixed(2)})`
-          : p.hueShift > 0.72
-            ? `rgba(192, 132, 252, ${(p.alpha * 0.9).toFixed(2)})`
-            : p.hueShift > 0.35
-              ? `rgba(167, 139, 250, ${(p.alpha * 0.85).toFixed(2)})`
-              : `rgba(125, 211, 252, ${(p.alpha * 0.65).toFixed(2)})`;
-
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = nodeColor;
+        ctx.fillStyle = isLight ? p.lightColor : p.darkColor;
         ctx.fill();
       }
 
-      // Subtle constellation filaments between nearby nodes
+      // Subtle constellation filaments batched by opacity bucket
       const maxDist = width < 768 ? connectDistance * 0.75 : connectDistance;
       const maxDistSq = maxDist * maxDist;
+      const lineStyles = isLight ? LIGHT_LINE_STYLES : DARK_LINE_STYLES;
 
-      ctx.lineWidth = 0.7;
+      for (let b = 0; b < LINE_BUCKETS; b++) {
+        buckets[b].length = 0;
+      }
+
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
@@ -129,16 +153,24 @@ const ParticlesField = ({
           const distSq = dx * dx + dy * dy;
           if (distSq < maxDistSq) {
             const strength = 1 - Math.sqrt(distSq) / maxDist;
-            const lineAlpha = strength * (isLight ? 0.14 : 0.19);
-            ctx.strokeStyle = isLight
-              ? `rgba(124, 58, 237, ${lineAlpha.toFixed(3)})`
-              : `rgba(167, 139, 250, ${lineAlpha.toFixed(3)})`;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
+            const bucketIdx = Math.min(LINE_BUCKETS - 1, Math.floor(strength * LINE_BUCKETS));
+            const coords = buckets[bucketIdx];
+            coords.push(a.x, a.y, b.x, b.y);
           }
         }
+      }
+
+      ctx.lineWidth = 0.7;
+      for (let b = 0; b < LINE_BUCKETS; b++) {
+        const coords = buckets[b];
+        if (coords.length === 0) continue;
+        ctx.strokeStyle = lineStyles[b];
+        ctx.beginPath();
+        for (let k = 0; k < coords.length; k += 4) {
+          ctx.moveTo(coords[k], coords[k + 1]);
+          ctx.lineTo(coords[k + 2], coords[k + 3]);
+        }
+        ctx.stroke();
       }
     };
 
@@ -158,19 +190,35 @@ const ParticlesField = ({
     };
 
     const resize = () => {
-      width = Math.max(1, container.clientWidth);
-      height = Math.max(1, container.clientHeight);
-      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const nextWidth = Math.max(1, container.clientWidth);
+      const nextHeight = Math.max(1, container.clientHeight);
+      const nextDpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      if (nextWidth === width && nextHeight === height && nextDpr === dpr) {
+        return;
+      }
+      width = nextWidth;
+      height = nextHeight;
+      dpr = nextDpr;
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       seedParticles();
-      drawFrame(false);
-      wake();
+      if (visible) {
+        drawFrame(false);
+        wake();
+      }
+    };
+
+    const scheduleResize = () => {
+      if (resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        resize();
+      });
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse") return;
+      if (!visible || event.pointerType !== "mouse") return;
       const rect = container.getBoundingClientRect();
       pointer.x = event.clientX - rect.left;
       pointer.y = event.clientY - rect.top;
@@ -186,12 +234,34 @@ const ParticlesField = ({
       wake();
     };
 
-    const resizeObserver = new ResizeObserver(resize);
+    const onMotionChange = (event: MediaQueryListEvent) => {
+      reduced = event.matches;
+      if (visible) {
+        if (reduced) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+          drawFrame(false);
+        } else {
+          wake();
+        }
+      }
+    };
+
+    redrawRef.current = () => {
+      if (visible && reduced) {
+        drawFrame(false);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(scheduleResize);
     resizeObserver.observe(container);
 
     const intersection = new IntersectionObserver((entries) => {
       visible = entries.some((entry) => entry.isIntersecting);
-      if (visible) wake();
+      if (visible) {
+        if (reduced) drawFrame(false);
+        else wake();
+      }
     });
     intersection.observe(container);
 
@@ -200,16 +270,20 @@ const ParticlesField = ({
       document.documentElement.addEventListener("pointerleave", onPointerLeave);
     }
     document.addEventListener("visibilitychange", onVisibility);
+    motionQuery?.addEventListener?.("change", onMotionChange);
 
     resize();
 
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(resizeRaf);
+      redrawRef.current = null;
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
       document.documentElement.removeEventListener("pointerleave", onPointerLeave);
       document.removeEventListener("visibilitychange", onVisibility);
+      motionQuery?.removeEventListener?.("change", onMotionChange);
     };
   }, [connectDistance, count]);
 
@@ -224,4 +298,4 @@ const ParticlesField = ({
   );
 };
 
-export default ParticlesField;
+export default memo(ParticlesField);

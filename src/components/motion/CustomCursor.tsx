@@ -47,6 +47,7 @@ const CustomCursor = () => {
     const ringPos = { x: 0, y: 0 };
     let visible = false;
     let state: CursorState = "default";
+    let lastTarget: EventTarget | null = null;
     let raf = 0;
     let lastTime = 0;
 
@@ -96,6 +97,7 @@ const CustomCursor = () => {
 
     const hide = () => {
       visible = false;
+      lastTarget = null;
       delete root.dataset.visible;
       delete root.dataset.pressed;
       html.classList.remove(ACTIVE_CLASS);
@@ -107,6 +109,8 @@ const CustomCursor = () => {
     };
 
     const inspect = (eventTarget: EventTarget | null) => {
+      if (eventTarget === lastTarget) return;
+      lastTarget = eventTarget;
       const el = eventTarget instanceof Element ? eventTarget : null;
       if (!el) return setState("default");
       if (el.closest(TEXT_INPUT_SELECTOR)) return setState("text");

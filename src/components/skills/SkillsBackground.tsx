@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, memo, Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 const GradientASCII = lazy(() => import("../react-bits/GradientASCII"));
 
@@ -141,4 +141,4 @@ const SkillsBackground = ({ theme }: { theme: "dark" | "light" }) => {
   );
 };
 
-export default SkillsBackground;
+export default memo(SkillsBackground);

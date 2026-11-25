@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { memo, useMemo, useState, type CSSProperties } from "react";
 import { Sparkles } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import { useTheme } from "../hooks/useTheme";
@@ -14,7 +14,7 @@ import {
 
 const ALL = "all";
 
-const SkillBadge = ({
+const SkillBadge = memo(({
   skill,
   theme,
   index,
@@ -72,7 +72,7 @@ const SkillBadge = ({
       </span>
     </li>
   );
-};
+});
 
 const Skills = () => {
   const { t } = usePersonalData();
@@ -80,9 +80,10 @@ const Skills = () => {
   const [activeCategory, setActiveCategory] = useState<string>(ALL);
 
   const isAll = activeCategory === ALL;
-  const visibleCategories = isAll
-    ? SKILL_CATEGORIES
-    : SKILL_CATEGORIES.filter((cat) => cat.id === activeCategory);
+  const visibleCategories = useMemo(
+    () => (isAll ? SKILL_CATEGORIES : SKILL_CATEGORIES.filter((cat) => cat.id === activeCategory)),
+    [isAll, activeCategory]
+  );
 
   const filterBase =
     "font-mono text-xs px-3.5 py-2 rounded-xl border transition-all duration-200 cursor-pointer min-h-10";

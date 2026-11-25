@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PersonalDataContext, translations, type Lang } from "../context/PersonalDataContext";
 
 const STORAGE_KEY = "portfolio-lang";
@@ -36,7 +36,7 @@ export const PersonalDataProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const toggleLang = () => {
+  const toggleLang = useCallback(() => {
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -56,10 +56,15 @@ export const PersonalDataProvider = ({ children }: { children: ReactNode }) => {
       timersRef.current.push(t2);
     }, 160);
     timersRef.current.push(t1);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ lang, t: translations[lang], toggleLang, transitioning }),
+    [lang, toggleLang, transitioning]
+  );
 
   return (
-    <PersonalDataContext.Provider value={{ lang, t: translations[lang], toggleLang, transitioning }}>
+    <PersonalDataContext.Provider value={value}>
       {children}
     </PersonalDataContext.Provider>
   );

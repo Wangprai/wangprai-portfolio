@@ -3,6 +3,7 @@ import { Briefcase, GraduationCap, Layers, Sparkles } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import { useTheme } from "../hooks/useTheme";
 import profile from "../assets/profile.png";
+import profileWebp from "../assets/profile.webp";
 import ScrollReveal from "./motion/ScrollReveal";
 import SpotlightCard from "./react-bits/SpotlightCard";
 import TiltedCard from "./react-bits/TiltedCard";
@@ -115,15 +116,18 @@ const About = () => {
                     className="absolute inset-0 rounded-2xl border border-primary/45 translate-x-3 translate-y-3 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-300"
                   />
                   <div className="hud-corners relative w-full h-full rounded-2xl overflow-hidden border border-primary/35 bg-card shadow-2xl">
-                    <img
-                      src={profile}
-                      alt="Wangprai Jullapech"
-                      width={320}
-                      height={320}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
-                    />
+                    <picture>
+                      <source srcSet={profileWebp} type="image/webp" />
+                      <img
+                        src={profile}
+                        alt="Wangprai Jullapech"
+                        width={320}
+                        height={320}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                      />
+                    </picture>
                     <div
                       aria-hidden="true"
                       className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/85 via-background/30 to-transparent"

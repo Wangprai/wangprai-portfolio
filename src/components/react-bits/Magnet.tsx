@@ -49,9 +49,11 @@ type Entry = {
   reduce: boolean;
   wake: () => void;
   active: boolean;
+  visible: boolean;
 };
 
 const DEFAULT_SPRING = { stiffness: 170, damping: 16, mass: 1 };
+const MOTION_KEYS: (keyof Motion)[] = ['x', 'y', 'tiltX', 'tiltY', 'scale'];
 
 const smoothstep = (edge0: number, edge1: number, value: number) => {
   const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
@@ -59,7 +61,10 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
 };
 
 const registry = new Set<Entry>();
+const entryByElement = new WeakMap<Element, Entry>();
 const field: { pointer: Point | null; owner: Entry | null } = { pointer: null, owner: null };
+let arbitrateRaf = 0;
+let sharedObserver: IntersectionObserver | null = null;
 let detach: (() => void) | null = null;
 
 const reach = (rect: DOMRect, pointer: Point) => {
@@ -74,9 +79,10 @@ const arbitrate = () => {
   let nearest = Infinity;
   let closest = Infinity;
   for (const entry of registry) {
+    if (!entry.visible && !entry.active) continue;
     const s = entry.settings.current;
     let near: { dx: number; dy: number; outside: number } | null = null;
-    if (field.pointer && !s.disabled && !entry.reduce) {
+    if (field.pointer && !s.disabled && !entry.reduce && entry.visible) {
       near = reach(entry.wrapper.getBoundingClientRect(), field.pointer);
       if (near.outside > s.padding) near = null;
     }
@@ -98,23 +104,59 @@ const arbitrate = () => {
   if (winner) winner.wake();
 };
 
+const scheduleArbitrate = () => {
+  if (!arbitrateRaf && !document.hidden) {
+    arbitrateRaf = requestAnimationFrame(() => {
+      arbitrateRaf = 0;
+      arbitrate();
+    });
+  }
+};
+
 const attach = () => {
+  if (typeof IntersectionObserver !== 'undefined') {
+    sharedObserver = new IntersectionObserver(
+      entries => {
+        for (const ioEntry of entries) {
+          const entry = entryByElement.get(ioEntry.target);
+          if (!entry) continue;
+          entry.visible = ioEntry.isIntersecting;
+          if (!entry.visible && entry.active) {
+            if (field.owner === entry) field.owner = null;
+            entry.wake();
+          }
+        }
+      },
+      { rootMargin: '180px 0px' }
+    );
+  }
+
   const onPointerMove = (event: PointerEvent) => {
     if (event.pointerType === 'touch') return;
     field.pointer = { x: event.clientX, y: event.clientY };
-    arbitrate();
+    scheduleArbitrate();
+  };
+  const onScroll = () => {
+    if (!field.pointer && !field.owner) return;
+    scheduleArbitrate();
   };
   const onLeave = () => {
     field.pointer = null;
-    arbitrate();
+    scheduleArbitrate();
   };
   window.addEventListener('pointermove', onPointerMove, { passive: true });
-  window.addEventListener('scroll', arbitrate, { passive: true, capture: true });
+  window.addEventListener('scroll', onScroll, { passive: true, capture: true });
   document.documentElement.addEventListener('pointerleave', onLeave);
   window.addEventListener('blur', onLeave);
   return () => {
+    if (arbitrateRaf) {
+      cancelAnimationFrame(arbitrateRaf);
+      arbitrateRaf = 0;
+    }
+    sharedObserver?.disconnect();
+    sharedObserver = null;
     window.removeEventListener('pointermove', onPointerMove);
-    window.removeEventListener('scroll', arbitrate, { capture: true });
+    window.removeEventListener('scroll', onScroll, { capture: true });
     document.documentElement.removeEventListener('pointerleave', onLeave);
     window.removeEventListener('blur', onLeave);
   };
@@ -140,33 +182,68 @@ const Magnet = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const wakeRef = useRef<(() => void) | null>(null);
-  const settings: Settings = {
-    padding: Math.max(0, padding),
+  const clampedPadding = Math.max(0, padding);
+  const clampedStrength = Math.max(0.1, magnetStrength);
+  const clampedStiffness = Math.max(1, spring?.stiffness ?? DEFAULT_SPRING.stiffness);
+  const clampedDamping = Math.max(0, spring?.damping ?? DEFAULT_SPRING.damping);
+  const clampedMass = Math.max(0.01, spring?.mass ?? DEFAULT_SPRING.mass);
+
+  const settingsRef = useRef<Settings>({
+    padding: clampedPadding,
     disabled,
-    strength: Math.max(0.1, magnetStrength),
+    strength: clampedStrength,
     maxOffset,
     exclusive,
     axis,
     tilt,
     scale,
-    stiffness: Math.max(1, spring?.stiffness ?? DEFAULT_SPRING.stiffness),
-    damping: Math.max(0, spring?.damping ?? DEFAULT_SPRING.damping),
-    mass: Math.max(0.01, spring?.mass ?? DEFAULT_SPRING.mass),
+    stiffness: clampedStiffness,
+    damping: clampedDamping,
+    mass: clampedMass,
     onActiveChange
-  };
-  const settingsRef = useRef(settings);
+  });
+  const onActiveChangeRef = useRef(onActiveChange);
 
   useEffect(() => {
-    settingsRef.current = settings;
+    onActiveChangeRef.current = onActiveChange;
+  }, [onActiveChange]);
+
+  useEffect(() => {
+    settingsRef.current = {
+      padding: clampedPadding,
+      disabled,
+      strength: clampedStrength,
+      maxOffset,
+      exclusive,
+      axis,
+      tilt,
+      scale,
+      stiffness: clampedStiffness,
+      damping: clampedDamping,
+      mass: clampedMass,
+      onActiveChange: onActiveChangeRef.current
+    };
     wakeRef.current?.();
-  });
+  }, [
+    clampedPadding,
+    disabled,
+    clampedStrength,
+    maxOffset,
+    exclusive,
+    axis,
+    tilt,
+    scale,
+    clampedStiffness,
+    clampedDamping,
+    clampedMass
+  ]);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
     const inner = innerRef.current;
     if (!wrapper || !inner) return undefined;
 
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const current: Motion = { x: 0, y: 0, tiltX: 0, tiltY: 0, scale: 1 };
     const velocity: Motion = { x: 0, y: 0, tiltX: 0, tiltY: 0, scale: 0 };
     let active = false;
@@ -176,20 +253,21 @@ const Magnet = ({
     const solve = (target: Motion, dt: number) => {
       const s = settingsRef.current;
       let resting = true;
-      (Object.keys(current) as (keyof Motion)[]).forEach(key => {
+      for (let i = 0; i < MOTION_KEYS.length; i++) {
+        const key = MOTION_KEYS[i];
         const force = s.stiffness * (target[key] - current[key]) - s.damping * velocity[key];
         velocity[key] += (force / s.mass) * dt;
         current[key] += velocity[key] * dt;
         const epsilon = key === 'scale' ? 0.001 : 0.05;
         if (Math.abs(target[key] - current[key]) > epsilon || Math.abs(velocity[key]) > epsilon) resting = false;
-      });
+      }
       return resting;
     };
 
     const measure = () => {
       const s = settingsRef.current;
       const target: Motion = { x: 0, y: 0, tiltX: 0, tiltY: 0, scale: 1 };
-      if (s.disabled || reduce || !field.pointer) return { target, engaged: false };
+      if (s.disabled || entry.reduce || !field.pointer || !entry.visible) return { target, engaged: false };
       if (s.exclusive && field.owner !== entry) return { target, engaged: false };
       const rect = wrapper.getBoundingClientRect();
       const { dx, dy, outside } = reach(rect, field.pointer);
@@ -232,16 +310,17 @@ const Magnet = ({
         entry.active = engaged;
         if (engaged) wrapper.setAttribute('data-magnet-active', '');
         else wrapper.removeAttribute('data-magnet-active');
-        settingsRef.current.onActiveChange?.(engaged);
+        onActiveChangeRef.current?.(engaged);
       }
       const steps = Math.ceil(dt / (1 / 120));
       let resting = true;
       for (let i = 0; i < steps; i++) resting = solve(target, dt / steps);
       if (resting) {
-        (Object.keys(current) as (keyof Motion)[]).forEach(key => {
+        for (let i = 0; i < MOTION_KEYS.length; i++) {
+          const key = MOTION_KEYS[i];
           current[key] = target[key];
           velocity[key] = 0;
-        });
+        }
       }
       apply();
       if (!resting) raf = requestAnimationFrame(frame);
@@ -252,17 +331,42 @@ const Magnet = ({
       if (!raf) raf = requestAnimationFrame(frame);
     }
 
-    const entry: Entry = { wrapper, settings: settingsRef, reduce, wake, active: false };
-    registry.add(entry);
+    const entry: Entry = {
+      wrapper,
+      settings: settingsRef,
+      reduce: motionQuery?.matches ?? false,
+      wake,
+      active: false,
+      visible: typeof IntersectionObserver === 'undefined'
+    };
+
+    const onMotionChange = (event: MediaQueryListEvent) => {
+      entry.reduce = event.matches;
+      if (entry.reduce && entry.active) {
+        if (field.owner === entry) field.owner = null;
+        wake();
+      }
+    };
+
     if (!detach) detach = attach();
+    registry.add(entry);
+    entryByElement.set(wrapper, entry);
+    sharedObserver?.observe(wrapper);
+    motionQuery?.addEventListener?.('change', onMotionChange);
+
     wakeRef.current = () => {
-      arbitrate();
-      wake();
+      if (entry.visible || entry.active) {
+        scheduleArbitrate();
+        if (entry.active) wake();
+      }
     };
 
     return () => {
       cancelAnimationFrame(raf);
       wakeRef.current = null;
+      motionQuery?.removeEventListener?.('change', onMotionChange);
+      sharedObserver?.unobserve(wrapper);
+      entryByElement.delete(wrapper);
       registry.delete(entry);
       if (field.owner === entry) field.owner = null;
       if (!registry.size && detach) {

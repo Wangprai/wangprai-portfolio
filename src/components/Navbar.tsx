@@ -34,24 +34,63 @@ const Navbar = () => {
   ];
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 24);
-      if (window.scrollY < 140) {
+    let raf = 0;
+    let maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    let lastScrolled: boolean | null = null;
+    let lastWasTop = false;
+
+    const updateMetrics = () => {
+      maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    };
+
+    const flush = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const isScrolled = y > 24;
+      if (isScrolled !== lastScrolled) {
+        lastScrolled = isScrolled;
+        setScrolled(isScrolled);
+      }
+      const isTop = y < 140;
+      if (isTop && !lastWasTop) {
         setActiveSection("");
       }
+      lastWasTop = isTop;
+
       if (progressRef.current) {
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
+        const progress = maxScroll > 0 ? Math.min(1, Math.max(0, y / maxScroll)) : 0;
         progressRef.current.style.transform = `scaleX(${progress.toFixed(4)})`;
       }
     };
 
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll, { passive: true });
+    const scheduleFlush = () => {
+      if (!raf) {
+        raf = requestAnimationFrame(flush);
+      }
+    };
+
+    const handleResize = () => {
+      updateMetrics();
+      scheduleFlush();
+    };
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            updateMetrics();
+            scheduleFlush();
+          })
+        : null;
+    resizeObserver?.observe(document.documentElement);
+
+    flush();
+    window.addEventListener("scroll", scheduleFlush, { passive: true });
+    window.addEventListener("resize", handleResize, { passive: true });
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
+      cancelAnimationFrame(raf);
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", scheduleFlush);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 

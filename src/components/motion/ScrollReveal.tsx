@@ -27,6 +27,45 @@ const HIDDEN: Record<RevealVariant, string> = {
   right: "opacity-0 translate-x-5",
 };
 
+const revealCallbacks = new Map<Element, () => void>();
+let sharedRevealObserver: IntersectionObserver | null = null;
+
+const getRevealObserver = () => {
+  if (!sharedRevealObserver) {
+    sharedRevealObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const callback = revealCallbacks.get(entry.target);
+          sharedRevealObserver?.unobserve(entry.target);
+          revealCallbacks.delete(entry.target);
+          callback?.();
+        }
+        if (revealCallbacks.size === 0 && sharedRevealObserver) {
+          sharedRevealObserver.disconnect();
+          sharedRevealObserver = null;
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
+    );
+  }
+  return sharedRevealObserver;
+};
+
+const observeReveal = (el: Element, onReveal: () => void) => {
+  revealCallbacks.set(el, onReveal);
+  getRevealObserver().observe(el);
+  return () => {
+    if (!revealCallbacks.has(el)) return;
+    revealCallbacks.delete(el);
+    sharedRevealObserver?.unobserve(el);
+    if (revealCallbacks.size === 0 && sharedRevealObserver) {
+      sharedRevealObserver.disconnect();
+      sharedRevealObserver = null;
+    }
+  };
+};
+
 const ScrollReveal = ({
   children,
   className = "",
@@ -45,18 +84,7 @@ const ScrollReveal = ({
     const el = ref.current;
     if (!el) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
+    return observeReveal(el, () => setVisible(true));
   }, [visible]);
 
   return (

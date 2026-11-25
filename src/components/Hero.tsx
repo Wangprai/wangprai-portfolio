@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { memo, useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowDownRight,
   Cpu,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { usePersonalData } from "../hooks/usePersonalData";
 import { useTheme } from "../hooks/useTheme";
+import { observeOffscreenPause } from "../utils/viewportObserver";
 import Aurora from "./react-bits/Aurora";
 import BlurText from "./react-bits/BlurText";
 import DecryptedText from "./react-bits/DecryptedText";
@@ -56,25 +57,82 @@ const STACK_LAYERS = [
 
 const enter = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
 
+const StackLayerExplorer = memo(() => {
+  const [activeLayer, setActiveLayer] = useState<string>("frontend");
+  const currentItems = STACK_LAYERS.find((l) => l.id === activeLayer)?.items;
+
+  return (
+    <div className="pt-4 border-t border-border/75">
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {STACK_LAYERS.map((layer) => {
+          const Icon = layer.icon;
+          const isSelected = activeLayer === layer.id;
+          return (
+            <button
+              key={layer.id}
+              type="button"
+              onMouseEnter={() => setActiveLayer(layer.id)}
+              onFocus={() => setActiveLayer(layer.id)}
+              onClick={() => setActiveLayer(layer.id)}
+              aria-pressed={isSelected}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left font-mono text-[11px] font-medium transition-all duration-200 cursor-pointer ${
+                isSelected
+                  ? "border-primary/60 bg-primary/14 text-foreground shadow-[0_0_20px_-8px_hsl(var(--primary)/0.6)]"
+                  : "border-border/70 bg-background/45 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              <Icon
+                size={13}
+                aria-hidden="true"
+                className={isSelected ? layer.accent : "text-muted-foreground"}
+              />
+              <span>{layer.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Active Layer Readout */}
+      <div className="rounded-xl border border-primary/25 bg-background/60 px-3.5 py-2.5 min-h-[46px] flex flex-wrap items-center gap-1.5">
+        {currentItems?.map((tech) => (
+          <span
+            key={tech}
+            className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-primary/12 text-primary border border-primary/25"
+          >
+            {tech}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 const Hero = () => {
   const { t } = usePersonalData();
   const { theme } = useTheme();
   const isLight = theme === "light";
-  const [activeLayer, setActiveLayer] = useState<string>("frontend");
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    return observeOffscreenPause(el);
+  }, []);
 
   return (
     <section
+      ref={sectionRef}
       aria-label="Introduction"
       className="relative min-h-[min(100svh,980px)] flex items-center overflow-hidden section-padding pt-32 md:pt-36 pb-24"
     >
       {/* Layer 1: Deep Atmospheric Violet Backlight Orbs */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-36 right-[-6%] h-[30rem] w-[30rem] md:h-[40rem] md:w-[40rem] rounded-full bg-primary/22 blur-[140px] animate-aurora-float"
+        className="pause-offscreen pointer-events-none absolute -top-36 right-[-6%] h-[30rem] w-[30rem] md:h-[40rem] md:w-[40rem] rounded-full bg-primary/22 blur-[140px] animate-aurora-float"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-[-14%] left-[-10%] h-[24rem] w-[24rem] md:h-[32rem] md:w-[32rem] rounded-full bg-accent/14 blur-[130px] animate-pulse-glow"
+        className="pause-offscreen pointer-events-none absolute bottom-[-14%] left-[-10%] h-[24rem] w-[24rem] md:h-[32rem] md:w-[32rem] rounded-full bg-accent/14 blur-[130px] animate-pulse-glow"
       />
 
       {/* Layer 2: Interactive WebGL2 React Bits Aurora */}
@@ -122,7 +180,7 @@ const Hero = () => {
             style={enter(0)}
           >
             <span className="relative flex h-2 w-2 shrink-0">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
+              <span className="pause-offscreen absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
             </span>
             <Terminal size={13} className="text-primary shrink-0" aria-hidden="true" />
@@ -262,15 +320,15 @@ const Hero = () => {
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-2 rounded-full border border-dashed border-primary/32 animate-spin-slow"
+              className="pause-offscreen pointer-events-none absolute inset-2 rounded-full border border-dashed border-primary/32 animate-spin-slow"
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-10 rounded-full border border-dotted border-accent/28 animate-spin-reverse"
+              className="pause-offscreen pointer-events-none absolute inset-10 rounded-full border border-dotted border-accent/28 animate-spin-reverse"
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-12 rounded-full bg-gradient-to-tr from-primary/25 via-accent/18 to-sky-400/12 blur-3xl animate-pulse-glow"
+              className="pause-offscreen pointer-events-none absolute inset-12 rounded-full bg-gradient-to-tr from-primary/25 via-accent/18 to-sky-400/12 blur-3xl animate-pulse-glow"
             />
 
             <TiltedCard maxTilt={7} scaleOnHover={1.02} glareOpacity={0.22} className="w-full">
@@ -311,53 +369,12 @@ const Hero = () => {
                     </p>
                     <p className="hero-enter" style={enter(760)}>
                       {"};"}
-                      <span className="ml-1 inline-block h-3.5 w-[7px] translate-y-0.5 bg-primary animate-caret" />
+                      <span className="pause-offscreen ml-1 inline-block h-3.5 w-[7px] translate-y-0.5 bg-primary animate-caret" />
                     </p>
                   </div>
 
                   {/* Interactive Stack Layer Explorer */}
-                  <div className="pt-4 border-t border-border/75">
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      {STACK_LAYERS.map((layer) => {
-                        const Icon = layer.icon;
-                        const isSelected = activeLayer === layer.id;
-                        return (
-                          <button
-                            key={layer.id}
-                            type="button"
-                            onMouseEnter={() => setActiveLayer(layer.id)}
-                            onFocus={() => setActiveLayer(layer.id)}
-                            onClick={() => setActiveLayer(layer.id)}
-                            aria-pressed={isSelected}
-                            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left font-mono text-[11px] font-medium transition-all duration-200 cursor-pointer ${
-                              isSelected
-                                ? "border-primary/60 bg-primary/14 text-foreground shadow-[0_0_20px_-8px_hsl(var(--primary)/0.6)]"
-                                : "border-border/70 bg-background/45 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                            }`}
-                          >
-                            <Icon
-                              size={13}
-                              aria-hidden="true"
-                              className={isSelected ? layer.accent : "text-muted-foreground"}
-                            />
-                            <span>{layer.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Active Layer Readout */}
-                    <div className="rounded-xl border border-primary/25 bg-background/60 px-3.5 py-2.5 min-h-[46px] flex flex-wrap items-center gap-1.5">
-                      {STACK_LAYERS.find((l) => l.id === activeLayer)?.items.map((tech) => (
-                        <span
-                          key={tech}
-                          className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-primary/12 text-primary border border-primary/25"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  <StackLayerExplorer />
                 </div>
               </StarBorder>
             </TiltedCard>
@@ -375,7 +392,7 @@ const Hero = () => {
           aria-hidden="true"
           className="flex h-8 w-5 justify-center rounded-full border border-current/50 pt-1.5 group-hover/cue:border-primary transition-colors"
         >
-          <span className="h-1.5 w-1 rounded-full bg-primary animate-scroll-dot" />
+          <span className="pause-offscreen h-1.5 w-1 rounded-full bg-primary animate-scroll-dot" />
         </span>
         <span>{t.hero.scrollCue}</span>
       </a>

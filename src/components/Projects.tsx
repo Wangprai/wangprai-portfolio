@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { lazy, memo, Suspense, useCallback, useMemo, useState, type CSSProperties } from "react";
 import {
   ArrowUpRight,
   AudioLines,
@@ -13,10 +13,13 @@ import { SiHuggingface } from "react-icons/si";
 import { usePersonalData } from "../hooks/usePersonalData";
 import { useTheme } from "../hooks/useTheme";
 import ScrollReveal from "./motion/ScrollReveal";
-import ProjectModal, { type ProjectItem } from "./ProjectModal";
+import type { ProjectItem } from "./ProjectModal";
 import SpotlightCard from "./react-bits/SpotlightCard";
 import StarBorder from "./react-bits/StarBorder";
 import SectionHeading from "./SectionHeading";
+
+const loadProjectModal = () => import("./ProjectModal");
+const ProjectModal = lazy(loadProjectModal);
 
 type ProjectFilter = "all" | "web" | "aiData";
 
@@ -24,7 +27,7 @@ type ProjectFilter = "all" | "web" | "aiData";
  * Abstract geometric architectural motifs — strictly stylized vector art
  * representing each project's technical domain (never fake UI screenshots).
  */
-const ProjectMotif = ({ id }: { id: string }) => {
+const ProjectMotif = memo(({ id }: { id: string }) => {
   if (id === "iotmeetingroomreservation") {
     return (
       <svg
@@ -129,7 +132,7 @@ const ProjectMotif = ({ id }: { id: string }) => {
       <line x1="18" y1="58" x2="264" y2="58" stroke="currentColor" strokeOpacity="0.22" strokeWidth="1" />
     </svg>
   );
-};
+});
 
 const Projects = () => {
   const { t } = usePersonalData();
@@ -142,91 +145,103 @@ const Projects = () => {
     featured: boolean;
     group: "web" | "aiData";
     indexLabel: string;
-  })[] = [
-    {
-      id: "iotmeetingroomreservation",
-      indexLabel: "01",
-      title: "IOT Meeting Room Reservation",
-      category: t.projects.categories.fullstack,
-      description: t.projects.iotmeetingroomreservation,
-      highlights: t.projects.highlights.iotmeetingroomreservation,
-      tech: ["React", "TypeScript", "ElysiaJS", "Ant Design", "Oracle", "Socket.io"],
-      icon: Globe,
-      featured: true,
-      group: "web",
-    },
-    {
-      id: "daikinthai",
-      indexLabel: "02",
-      title: "DaikinThai Website",
-      category: t.projects.categories.backendWeb,
-      description: t.projects.daikinthai,
-      highlights: t.projects.highlights.daikinthai,
-      tech: ["PHP", "Laravel", "Bootstrap", "MySQL"],
-      icon: LayoutDashboard,
-      featured: true,
-      group: "web",
-    },
-    {
-      id: "donutmodel",
-      indexLabel: "03",
-      title: "Document Understanding Transformer (Donut model)",
-      category: t.projects.categories.aiMl,
-      description: t.projects.donutmodel,
-      highlights: t.projects.highlights.donutmodel,
-      tech: ["Python", "PyTorch", "Transformers", "Hugging Face", "Wandb"],
-      icon: ScanText,
-      featured: false,
-      group: "aiData",
-    },
-    {
-      id: "asrmodel",
-      indexLabel: "04",
-      title: "Automatic Speech Recognition for Thai (ASR model)",
-      category: t.projects.categories.aiMl,
-      description: t.projects.asrmodel,
-      highlights: t.projects.highlights.asrmodel,
-      tech: ["Python", "PyTorch", "PyThaiNLP", "Transformers", "Hugging Face"],
-      github: "https://github.com/Wangprai/asr-with-llm.git",
-      huggingface: "https://huggingface.co/Wangprai/wav2vec2-th",
-      icon: AudioLines,
-      featured: false,
-      group: "aiData",
-    },
-    {
-      id: "salarygrowth",
-      indexLabel: "05",
-      title: "Salary Growth in Data Science Career",
-      category: t.projects.categories.dataAnalysis,
-      description: t.projects.salarygrowth,
-      highlights: t.projects.highlights.salarygrowth,
-      tech: ["Python", "Pandas", "NumPy", "Scikit-learn", "Matplotlib", "Seaborn"],
-      github: "https://github.com/Wangprai/Salary-growth-in-data-science-career.git",
-      icon: BarChart3,
-      featured: false,
-      group: "aiData",
-    },
-  ];
+  })[] = useMemo(
+    () => [
+      {
+        id: "iotmeetingroomreservation",
+        indexLabel: "01",
+        title: "IOT Meeting Room Reservation",
+        category: t.projects.categories.fullstack,
+        description: t.projects.iotmeetingroomreservation,
+        highlights: t.projects.highlights.iotmeetingroomreservation,
+        tech: ["React", "TypeScript", "ElysiaJS", "Ant Design", "Oracle", "Socket.io"],
+        icon: Globe,
+        featured: true,
+        group: "web",
+      },
+      {
+        id: "daikinthai",
+        indexLabel: "02",
+        title: "DaikinThai Website",
+        category: t.projects.categories.backendWeb,
+        description: t.projects.daikinthai,
+        highlights: t.projects.highlights.daikinthai,
+        tech: ["PHP", "Laravel", "Bootstrap", "MySQL"],
+        icon: LayoutDashboard,
+        featured: true,
+        group: "web",
+      },
+      {
+        id: "donutmodel",
+        indexLabel: "03",
+        title: "Document Understanding Transformer (Donut model)",
+        category: t.projects.categories.aiMl,
+        description: t.projects.donutmodel,
+        highlights: t.projects.highlights.donutmodel,
+        tech: ["Python", "PyTorch", "Transformers", "Hugging Face", "Wandb"],
+        icon: ScanText,
+        featured: false,
+        group: "aiData",
+      },
+      {
+        id: "asrmodel",
+        indexLabel: "04",
+        title: "Automatic Speech Recognition for Thai (ASR model)",
+        category: t.projects.categories.aiMl,
+        description: t.projects.asrmodel,
+        highlights: t.projects.highlights.asrmodel,
+        tech: ["Python", "PyTorch", "PyThaiNLP", "Transformers", "Hugging Face"],
+        github: "https://github.com/Wangprai/asr-with-llm.git",
+        huggingface: "https://huggingface.co/Wangprai/wav2vec2-th",
+        icon: AudioLines,
+        featured: false,
+        group: "aiData",
+      },
+      {
+        id: "salarygrowth",
+        indexLabel: "05",
+        title: "Salary Growth in Data Science Career",
+        category: t.projects.categories.dataAnalysis,
+        description: t.projects.salarygrowth,
+        highlights: t.projects.highlights.salarygrowth,
+        tech: ["Python", "Pandas", "NumPy", "Scikit-learn", "Matplotlib", "Seaborn"],
+        github: "https://github.com/Wangprai/Salary-growth-in-data-science-career.git",
+        icon: BarChart3,
+        featured: false,
+        group: "aiData",
+      },
+    ],
+    [t]
+  );
 
-  const visibleProjects =
-    filter === "all" ? projects : projects.filter((p) => p.group === filter);
+  const visibleProjects = useMemo(
+    () => (filter === "all" ? projects : projects.filter((p) => p.group === filter)),
+    [filter, projects]
+  );
 
-  const activeProject =
-    projects.find((project) => project.id === selectedProjectId) ?? null;
+  const activeProject = useMemo(
+    () => projects.find((project) => project.id === selectedProjectId) ?? null,
+    [projects, selectedProjectId]
+  );
 
-  const filterOptions: { id: ProjectFilter; label: string; count: number }[] = [
-    { id: "all", label: t.projects.filters.all, count: projects.length },
-    {
-      id: "web",
-      label: t.projects.filters.web,
-      count: projects.filter((p) => p.group === "web").length,
-    },
-    {
-      id: "aiData",
-      label: t.projects.filters.aiData,
-      count: projects.filter((p) => p.group === "aiData").length,
-    },
-  ];
+  const filterOptions: { id: ProjectFilter; label: string; count: number }[] = useMemo(
+    () => [
+      { id: "all", label: t.projects.filters.all, count: projects.length },
+      {
+        id: "web",
+        label: t.projects.filters.web,
+        count: projects.filter((p) => p.group === "web").length,
+      },
+      {
+        id: "aiData",
+        label: t.projects.filters.aiData,
+        count: projects.filter((p) => p.group === "aiData").length,
+      },
+    ],
+    [projects, t]
+  );
+
+  const handleCloseModal = useCallback(() => setSelectedProjectId(null), []);
 
   return (
     <section id="projects" className="section-horizon section-padding relative overflow-hidden">
@@ -307,6 +322,12 @@ const Projects = () => {
                 spotlightSize={isFlagship ? 300 : 250}
                 data-cursor="card"
                 data-cursor-label="VIEW"
+                onPointerEnter={() => {
+                  void loadProjectModal();
+                }}
+                onFocus={() => {
+                  void loadProjectModal();
+                }}
                 onClick={() => setSelectedProjectId(project.id)}
                 className="h-full p-6 sm:p-7 flex flex-col justify-between group transition-all duration-300 ease-out hover:-translate-y-1.5 cursor-pointer"
               >
@@ -447,10 +468,14 @@ const Projects = () => {
         </div>
       </div>
 
-      <ProjectModal
-        project={activeProject}
-        onClose={() => setSelectedProjectId(null)}
-      />
+      {activeProject && (
+        <Suspense fallback={null}>
+          <ProjectModal
+            project={activeProject}
+            onClose={handleCloseModal}
+          />
+        </Suspense>
+      )}
     </section>
   );
 };
