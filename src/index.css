@@ -782,3 +782,75 @@ html.custom-cursor-active [contenteditable="true"] {
     background-position: 0% center !important;
   }
 }
+
+
+/* ---- Skills section: filter panel transition + feathered ASCII background ---- */
+@keyframes skills-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.skills-panel {
+  animation: skills-panel-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Smooth vertical & horizontal edge feathering so GradientASCII blends seamlessly */
+.skills-ascii-mask-y {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgb(0 0 0 / 0.18) 9%,
+    rgb(0 0 0 / 0.72) 20%,
+    #000 32%,
+    #000 72%,
+    rgb(0 0 0 / 0.52) 86%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgb(0 0 0 / 0.18) 9%,
+    rgb(0 0 0 / 0.72) 20%,
+    #000 32%,
+    #000 72%,
+    rgb(0 0 0 / 0.52) 86%,
+    transparent 100%
+  );
+}
+
+.skills-ascii-mask-x {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
+}
+
+/* Static subtle ambient fallback when WebGL2 is unavailable or still initializing */
+.skills-ascii-fallback {
+  background-image:
+    radial-gradient(ellipse 68% 58% at 50% 48%, hsl(var(--primary) / 0.16), transparent 72%),
+    radial-gradient(circle at 1px 1px, hsl(var(--primary) / 0.22) 1px, transparent 1.5px);
+  background-size: 100% 100%, 16px 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skills-panel {
+    animation: none;
+  }
+}
