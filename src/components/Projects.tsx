@@ -17,6 +17,9 @@ import type { ProjectItem } from "./ProjectModal";
 import SpotlightCard from "./react-bits/SpotlightCard";
 import StarBorder from "./react-bits/StarBorder";
 import SectionHeading from "./SectionHeading";
+import { glowOrb } from "../utils/glowOrb";
+
+const PROJECTS_ORB = glowOrb({ blurPx: 140, radiusPx: 260, color: "hsl(var(--primary))", alphaPct: 12 });
 
 const loadProjectModal = () => import("./ProjectModal");
 const ProjectModal = lazy(loadProjectModal);
@@ -248,7 +251,8 @@ const Projects = () => {
       {/* Ambient Violet Stage Lighting */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[22rem] w-[48rem] rounded-full bg-primary/12 blur-[140px]"
+        className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[22rem] w-[48rem] rounded-full glow-orb"
+        style={PROJECTS_ORB}
       />
 
       <div className="relative z-10 max-w-6xl mx-auto">

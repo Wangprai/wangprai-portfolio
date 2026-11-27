@@ -7,6 +7,9 @@ import CountUp from "./react-bits/CountUp";
 import SpotlightCard from "./react-bits/SpotlightCard";
 import StarBorder from "./react-bits/StarBorder";
 import SectionHeading from "./SectionHeading";
+import { glowOrb } from "../utils/glowOrb";
+
+const EXPERIENCE_ORB = glowOrb({ blurPx: 130, radiusPx: 208, color: "hsl(var(--accent))", alphaPct: 10 });
 
 const INTERNSHIP_STACK = [
   "TypeScript",
@@ -47,7 +50,8 @@ const Experience = () => {
     <section id="experience" className="section-horizon section-padding relative overflow-hidden">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-24 top-1/3 h-[26rem] w-[26rem] rounded-full bg-accent/10 blur-[130px]"
+        className="pointer-events-none absolute -left-24 top-1/3 h-[26rem] w-[26rem] rounded-full glow-orb"
+        style={EXPERIENCE_ORB}
       />
 
       <div className="relative z-10 max-w-6xl mx-auto">

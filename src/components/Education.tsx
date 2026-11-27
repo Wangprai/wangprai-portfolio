@@ -5,6 +5,9 @@ import { useTheme } from "../hooks/useTheme";
 import ScrollReveal from "./motion/ScrollReveal";
 import SpotlightCard from "./react-bits/SpotlightCard";
 import SectionHeading from "./SectionHeading";
+import { glowOrb } from "../utils/glowOrb";
+
+const EDUCATION_ORB = glowOrb({ blurPx: 120, radiusPx: 176, color: "hsl(var(--primary))", alphaPct: 10 });
 
 const Education = () => {
   const { t } = usePersonalData();
@@ -14,7 +17,8 @@ const Education = () => {
     <section id="education" className="section-horizon section-padding relative overflow-hidden">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-24 top-1/2 -translate-y-1/2 h-[22rem] w-[22rem] rounded-full bg-primary/10 blur-[120px]"
+        className="pointer-events-none absolute -right-24 top-1/2 -translate-y-1/2 h-[22rem] w-[22rem] rounded-full glow-orb"
+        style={EDUCATION_ORB}
       />
 
       <div className="relative z-10 max-w-6xl mx-auto">

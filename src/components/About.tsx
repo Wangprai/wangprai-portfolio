@@ -8,6 +8,9 @@ import ScrollReveal from "./motion/ScrollReveal";
 import SpotlightCard from "./react-bits/SpotlightCard";
 import TiltedCard from "./react-bits/TiltedCard";
 import SectionHeading from "./SectionHeading";
+import { glowOrb } from "../utils/glowOrb";
+
+const ABOUT_ORB = glowOrb({ blurPx: 130, radiusPx: 224, color: "hsl(var(--primary))", alphaPct: 10 });
 
 const About = () => {
   const { t } = usePersonalData();
@@ -39,7 +42,8 @@ const About = () => {
       {/* Subtle Ambient Violet Depth Pool */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-1/4 right-[-12%] h-[28rem] w-[28rem] rounded-full bg-primary/10 blur-[130px]"
+        className="pointer-events-none absolute top-1/4 right-[-12%] h-[28rem] w-[28rem] rounded-full glow-orb"
+        style={ABOUT_ORB}
       />
 
       <div className="relative z-10 max-w-6xl mx-auto">

@@ -20,6 +20,16 @@ import ParticlesField from "./react-bits/ParticlesField";
 import ShinyText from "./react-bits/ShinyText";
 import StarBorder from "./react-bits/StarBorder";
 import TiltedCard from "./react-bits/TiltedCard";
+import { glowOrb } from "../utils/glowOrb";
+
+const HERO_ORB_TOP = glowOrb({ blurPx: 140, radiusPx: 240, radiusMdPx: 320, color: "hsl(var(--primary))", alphaPct: 22 });
+const HERO_ORB_BOTTOM = glowOrb({ blurPx: 130, radiusPx: 192, radiusMdPx: 256, color: "hsl(var(--accent))", alphaPct: 14 });
+const HERO_CONSOLE_GLOW = glowOrb({
+  blurPx: 64,
+  radiusPx: 176,
+  // Tailwind's bg-gradient-to-tr from-primary/25 via-accent/18 to-sky-400/12, inset by the 3σ glow margin
+  fill: "linear-gradient(to top right in oklab, color-mix(in oklab, hsl(var(--primary)) 25%, transparent) 271px, color-mix(in oklab, hsl(var(--accent)) 18%, transparent) 50%, color-mix(in oklab, var(--color-sky-400) 12%, transparent) calc(100% - 271px))",
+});
 
 const DARK_AURORA_STOPS = ["#4C1D95", "#7C3AED", "#C084FC", "#38BDF8", "#6D28D9"];
 const LIGHT_AURORA_STOPS = ["#7C3AED", "#A78BFA", "#C084FC", "#818CF8"];
@@ -128,11 +138,13 @@ const Hero = () => {
       {/* Layer 1: Deep Atmospheric Violet Backlight Orbs */}
       <div
         aria-hidden="true"
-        className="pause-offscreen pointer-events-none absolute -top-36 right-[-6%] h-[30rem] w-[30rem] md:h-[40rem] md:w-[40rem] rounded-full bg-primary/22 blur-[140px] animate-aurora-float"
+        className="pause-offscreen pointer-events-none absolute -top-36 right-[-6%] h-[30rem] w-[30rem] md:h-[40rem] md:w-[40rem] rounded-full glow-orb animate-aurora-float"
+        style={HERO_ORB_TOP}
       />
       <div
         aria-hidden="true"
-        className="pause-offscreen pointer-events-none absolute bottom-[-14%] left-[-10%] h-[24rem] w-[24rem] md:h-[32rem] md:w-[32rem] rounded-full bg-accent/14 blur-[130px] animate-pulse-glow"
+        className="pause-offscreen pointer-events-none absolute bottom-[-14%] left-[-10%] h-[24rem] w-[24rem] md:h-[32rem] md:w-[32rem] rounded-full glow-orb animate-pulse-glow"
+        style={HERO_ORB_BOTTOM}
       />
 
       {/* Layer 2: Interactive WebGL2 React Bits Aurora */}
@@ -328,7 +340,8 @@ const Hero = () => {
             />
             <div
               aria-hidden="true"
-              className="pause-offscreen pointer-events-none absolute inset-12 rounded-full bg-gradient-to-tr from-primary/25 via-accent/18 to-sky-400/12 blur-3xl animate-pulse-glow"
+              className="pause-offscreen pointer-events-none absolute inset-12 rounded-full glow-orb animate-pulse-glow"
+              style={HERO_CONSOLE_GLOW}
             />
 
             <TiltedCard maxTilt={7} scaleOnHover={1.02} glareOpacity={0.22} className="w-full">

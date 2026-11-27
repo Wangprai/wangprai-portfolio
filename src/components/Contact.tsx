@@ -8,6 +8,15 @@ import Magnet from "./react-bits/Magnet";
 import ParticlesField from "./react-bits/ParticlesField";
 import ShinyText from "./react-bits/ShinyText";
 import StarBorder from "./react-bits/StarBorder";
+import { glowOrb } from "../utils/glowOrb";
+
+const CONTACT_ORB = glowOrb({ blurPx: 140, radiusPx: 243, color: "hsl(var(--primary))", alphaPct: 15 });
+const CONTACT_INNER_GLOW = glowOrb({
+  blurPx: 85,
+  radiusPx: 169,
+  // Tailwind's bg-gradient-to-b from-primary/28 via-accent/18 to-transparent, inset by the 3σ glow margin
+  fill: "linear-gradient(to bottom in oklab, color-mix(in oklab, hsl(var(--primary)) 28%, transparent) 255px, color-mix(in oklab, hsl(var(--accent)) 18%, transparent) 50%, transparent calc(100% - 255px))",
+});
 
 const EMAIL = "wangprai.jullapech@gmail.com";
 const PHONE_HREF = "tel:+66845431757";
@@ -51,7 +60,8 @@ const Contact = () => {
       {/* Background Atmospheric Violet Halo */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 h-[22rem] w-[42rem] rounded-full bg-primary/15 blur-[140px]"
+        className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 h-[22rem] w-[42rem] rounded-full glow-orb"
+        style={CONTACT_ORB}
       />
 
       <div className="relative z-10 max-w-5xl mx-auto">
@@ -64,7 +74,8 @@ const Contact = () => {
               {/* Inner Top Violet Spotlight */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 h-64 w-[28rem] rounded-full bg-gradient-to-b from-primary/28 via-accent/18 to-transparent blur-[85px]"
+                className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 h-64 w-[28rem] rounded-full glow-orb"
+                style={CONTACT_INNER_GLOW}
               />
               <div
                 aria-hidden="true"

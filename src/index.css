@@ -615,6 +615,27 @@ html[lang="en"] body {
   );
 }
 
+/* Glow orbs: the falloff of a blurred disk painted as a gradient (see
+ * src/utils/glowOrb.ts), extending 3σ past the host box like the blur did.
+ * The host keeps its size, position and animation but paints nothing. */
+.glow-orb::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--orb-blur, 0px) * -3);
+  pointer-events: none;
+  background: var(--orb-bg);
+  -webkit-mask-image: var(--orb-mask, none);
+  mask-image: var(--orb-mask, none);
+}
+
+@media (min-width: 48rem) {
+  .glow-orb::before {
+    background: var(--orb-bg-md, var(--orb-bg));
+    -webkit-mask-image: var(--orb-mask-md, var(--orb-mask, none));
+    mask-image: var(--orb-mask-md, var(--orb-mask, none));
+  }
+}
+
 /* Subtle HUD corner accents */
 .hud-corners {
   position: relative;
