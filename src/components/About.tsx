@@ -133,10 +133,10 @@ const About = () => {
                       className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/85 via-background/30 to-transparent"
                     />
                     <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-center justify-between font-mono text-[11px]">
-                      <span className="px-2.5 py-0.5 rounded-md bg-background/75 backdrop-blur-md border border-primary/35 text-primary font-semibold">
+                      <span className="px-2.5 py-0.5 rounded-md bg-background/75 border border-primary/35 text-primary font-semibold">
                         Wangprai J.
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-background/70 backdrop-blur-md border border-border/70 text-muted-foreground">
+                      <span className="px-2 py-0.5 rounded-md bg-background/70 border border-border/70 text-muted-foreground">
                         B.S. CS · 2025
                       </span>
                     </div>

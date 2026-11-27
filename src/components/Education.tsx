@@ -88,7 +88,7 @@ const Education = () => {
                 className="reveal-item flex flex-wrap md:flex-col md:items-end gap-2"
                 style={{ "--i": 3, "--base": "90ms" } as CSSProperties}
               >
-                <span className="inline-flex items-center gap-2 font-mono text-xs sm:text-[13px] font-semibold px-4 py-2 rounded-xl border border-primary/35 bg-background/75 backdrop-blur-md text-foreground shadow-[0_6px_20px_-10px_hsl(var(--primary)/0.5)]">
+                <span className="inline-flex items-center gap-2 font-mono text-xs sm:text-[13px] font-semibold px-4 py-2 rounded-xl border border-primary/35 bg-background/75 text-foreground shadow-[0_6px_20px_-10px_hsl(var(--primary)/0.5)]">
                   <Calendar size={14} className="text-primary" aria-hidden="true" />
                   <span>{t.education.graduation}</span>
                 </span>

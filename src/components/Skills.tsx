@@ -48,7 +48,7 @@ const SkillBadge = memo(({
     return (
       <li
         style={{ "--i": index * 0.4, "--base": "55ms" } as CSSProperties}
-        className={`reveal-item group/chip inline-flex items-center gap-2 font-mono text-xs sm:text-[13px] px-3.5 py-2 rounded-xl border backdrop-blur-[2px] transition-all duration-200 hover:-translate-y-0.5 ${tone}`}
+        className={`reveal-item group/chip inline-flex items-center gap-2 font-mono text-xs sm:text-[13px] px-3.5 py-2 rounded-xl border transition-all duration-200 hover:-translate-y-0.5 ${tone}`}
       >
         <span
           aria-hidden="true"
@@ -64,7 +64,7 @@ const SkillBadge = memo(({
   return (
     <li
       style={{ "--i": index * 0.45, "--base": "55ms" } as CSSProperties}
-      className={`reveal-item group/chip flex items-center gap-3 min-w-0 font-mono text-xs sm:text-[13px] px-3.5 py-3 rounded-xl border backdrop-blur-[2px] transition-all duration-200 hover:-translate-y-0.5 ${tone}`}
+      className={`reveal-item group/chip flex items-center gap-3 min-w-0 font-mono text-xs sm:text-[13px] px-3.5 py-3 rounded-xl border transition-all duration-200 hover:-translate-y-0.5 ${tone}`}
     >
       <span
         aria-hidden="true"

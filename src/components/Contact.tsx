@@ -131,7 +131,7 @@ const Contact = () => {
                   >
                     <a
                       href={PHONE_HREF}
-                      className="group/phone inline-flex items-center justify-center gap-2.5 w-full sm:w-auto rounded-xl border border-primary/45 bg-background/70 backdrop-blur-md px-7 py-4 text-sm sm:text-base font-medium text-foreground hover:border-primary hover:bg-primary/12 transition-all"
+                      className="group/phone inline-flex items-center justify-center gap-2.5 w-full sm:w-auto rounded-xl border border-primary/45 bg-background/70 px-7 py-4 text-sm sm:text-base font-medium text-foreground hover:border-primary hover:bg-primary/12 transition-all"
                     >
                       <Phone
                         size={18}
@@ -148,7 +148,7 @@ const Contact = () => {
                   className="reveal-item pt-6 border-t border-border/75 flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-xs sm:text-sm font-mono text-muted-foreground"
                   style={{ "--i": 4, "--base": "70ms" } as CSSProperties}
                 >
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/65 backdrop-blur-sm px-3.5 py-2">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/65 px-3.5 py-2">
                     <a
                       href={`mailto:${EMAIL}`}
                       className="hover:text-primary transition-colors break-all"
@@ -181,7 +181,7 @@ const Contact = () => {
 
                   <a
                     href={PHONE_HREF}
-                    className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/65 backdrop-blur-sm px-3.5 py-2 hover:border-primary/60 hover:text-primary transition-all"
+                    className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/65 px-3.5 py-2 hover:border-primary/60 hover:text-primary transition-all"
                   >
                     <Phone size={13} className="text-primary" aria-hidden="true" />
                     <span>{PHONE_DISPLAY}</span>
@@ -191,7 +191,7 @@ const Contact = () => {
                     href="/docs/Wangprai_Resume-SE.pdf"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/65 backdrop-blur-sm px-3.5 py-2 hover:border-primary/60 hover:text-primary transition-all"
+                    className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/65 px-3.5 py-2 hover:border-primary/60 hover:text-primary transition-all"
                   >
                     <FileText size={13} className="text-primary" aria-hidden="true" />
                     <span>{t.hero.viewResume}</span>

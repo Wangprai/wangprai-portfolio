@@ -348,11 +348,11 @@ const Projects = () => {
 
                     {/* Corner Index & Featured Pill */}
                     <div className="absolute top-2.5 left-3 right-3 z-20 flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] font-semibold tracking-widest text-primary bg-background/80 backdrop-blur-md border border-primary/30 px-2 py-0.5 rounded-md">
+                      <span className="font-mono text-[10px] font-semibold tracking-widest text-primary bg-background/80 border border-primary/30 px-2 py-0.5 rounded-md">
                         PRJ // {project.indexLabel}
                       </span>
                       {project.featured && (
-                        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/15 backdrop-blur-md border border-primary/35 px-2.5 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/15 border border-primary/35 px-2.5 py-0.5 rounded-full">
                           <Sparkles size={10} aria-hidden="true" />
                           {t.projects.featuredBadge}
                         </span>
