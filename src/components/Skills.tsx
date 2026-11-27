@@ -14,6 +14,12 @@ import {
 
 const ALL = "all";
 
+// Skills cards sit over the animated ASCII background without a backdrop blur,
+// so the dark surface is more opaque (default 0.78) to keep text readable.
+const SKILLS_CARD_SURFACE_DARK = {
+  "--spotlight-card-surface": "hsl(var(--card) / 0.9)",
+} as CSSProperties;
+
 const SkillBadge = memo(({
   skill,
   theme,
@@ -156,6 +162,7 @@ const Skills = () => {
                     intensity={theme === "dark" ? 0.18 : 0.12}
                     borderGlow={isAll ? (cat.featured ? 0.72 : 0.55) : 0.9}
                     spotlightSize={260}
+                    style={theme === "dark" ? SKILLS_CARD_SURFACE_DARK : undefined}
                     className="group h-full p-5 sm:p-7 transition-transform duration-300 hover:-translate-y-1"
                   >
                     <div

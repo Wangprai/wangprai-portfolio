@@ -223,7 +223,7 @@ const attachShared = () => {
 };
 
 const CARD =
-  'relative isolate overflow-hidden rounded-2xl backdrop-blur-md [background-color:var(--spotlight-card-surface)] [box-shadow:var(--spotlight-card-shadow)]';
+  'relative isolate overflow-hidden rounded-2xl [background-color:var(--spotlight-card-surface)] [box-shadow:var(--spotlight-card-shadow)]';
 
 const SpotlightCard = ({
   children,
