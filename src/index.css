@@ -551,16 +551,14 @@ html[lang="en"] body {
   background-position: 100% 100%;
 }
 
-/* Star Border / Border Beam (React Bits "Star Border" adaptation) */
-@property --beam-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes beam-spin {
+/* Star Border / Border Beam (React Bits "Star Border" adaptation)
+ * The ring holds a static border-only mask; inside it an oversized square
+ * conic gradient rotates via `transform`, which runs on the compositor.
+ * Rotating a centered conic gradient by θ is identical to `from θ`, so this
+ * matches the previous animated-angle version without repainting each frame. */
+@keyframes beam-rotate {
   to {
-    --beam-angle: 360deg;
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
@@ -568,23 +566,15 @@ html[lang="en"] body {
   position: relative;
 }
 
-.border-beam::before {
-  content: "";
+.border-beam-ring {
   position: absolute;
   inset: 0;
   z-index: 2;
   border-radius: inherit;
   padding: 1.5px;
   pointer-events: none;
-  background: conic-gradient(
-    from var(--beam-angle),
-    transparent 0deg,
-    hsl(var(--primary) / 0.95) 38deg,
-    hsl(var(--accent) / 0.85) 62deg,
-    hsl(var(--cyan-spark) / 0.55) 78deg,
-    transparent 118deg,
-    transparent 360deg
-  );
+  overflow: hidden;
+  container-type: size;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -592,12 +582,31 @@ html[lang="en"] body {
   mask:
     linear-gradient(#000 0 0) content-box exclude,
     linear-gradient(#000 0 0);
-  animation: beam-spin var(--beam-speed, 7.5s) linear infinite;
 }
 
-.light .border-beam::before {
+.border-beam-spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Square side >= the ring's diagonal so the corners are always covered. */
+  width: calc(max(100cqw, 100cqh) * 1.42 + 4px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
   background: conic-gradient(
-    from var(--beam-angle),
+    from 0deg,
+    transparent 0deg,
+    hsl(var(--primary) / 0.95) 38deg,
+    hsl(var(--accent) / 0.85) 62deg,
+    hsl(var(--cyan-spark) / 0.55) 78deg,
+    transparent 118deg,
+    transparent 360deg
+  );
+  animation: beam-rotate var(--beam-speed, 7.5s) linear infinite;
+}
+
+.light .border-beam-spin {
+  background: conic-gradient(
+    from 0deg,
     transparent 0deg,
     hsl(var(--primary) / 0.85) 38deg,
     hsl(var(--accent) / 0.72) 64deg,
@@ -854,7 +863,7 @@ html.custom-cursor-active [contenteditable="true"] {
 }
 
 /* Pause infinite decorative CSS animations while scrolled out of view */
-[data-offscreen="true"].border-beam::before,
+[data-offscreen="true"].border-beam > .border-beam-ring > .border-beam-spin,
 [data-offscreen="true"].shiny-text,
 [data-offscreen="true"] .pause-offscreen {
   animation-play-state: paused !important;

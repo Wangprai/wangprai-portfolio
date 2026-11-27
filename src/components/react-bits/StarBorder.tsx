@@ -5,8 +5,9 @@ import { observeOffscreenPause } from "../../utils/viewportObserver";
  * StarBorder — dependency-free adaptation of React Bits "Star Border"
  * (https://reactbits.dev/animations/star-border).
  *
- * Wraps a surface or button in a travelling violet plasma border beam using
- * CSS Houdini `@property --beam-angle` (`.border-beam` in index.css).
+ * Wraps a surface or button in a travelling violet plasma border beam: a
+ * compositor-rotated conic gradient inside a static border-only mask
+ * (`.border-beam-ring` / `.border-beam-spin` in index.css).
  * Pauses automatically via a shared IntersectionObserver when scrolled offscreen.
  */
 interface StarBorderProps {
@@ -30,6 +31,10 @@ const StarBorder = ({ children, className = "", speedSeconds = 7.5 }: StarBorder
       className={`border-beam ${className}`}
       style={{ "--beam-speed": `${speedSeconds}s` } as CSSProperties}
     >
+      {/* First child so stacking matches the former ::before pseudo-element. */}
+      <span aria-hidden="true" className="border-beam-ring">
+        <span className="border-beam-spin" />
+      </span>
       {children}
     </div>
   );
