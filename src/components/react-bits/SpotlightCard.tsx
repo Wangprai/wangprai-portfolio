@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createRectCache } from '../../utils/rectCache';
 
 export type SpotlightShape = 'circle' | 'beam';
 
@@ -333,6 +334,7 @@ const SpotlightCard = ({
     let raf = 0;
     let last = 0;
     let alive = true;
+    const rects = createRectCache(root);
 
     const gradient = (s: Settings, size: number, x: number, y: number, stops: string) => {
       if (s.shape === 'beam') {
@@ -404,7 +406,7 @@ const SpotlightCard = ({
 
       const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
       last = now;
-      const rect = root.getBoundingClientRect();
+      const rect = rects.get();
       let tx = state.x;
       let ty = state.y;
       let target = 0;
@@ -543,6 +545,7 @@ const SpotlightCard = ({
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
+      rects.dispose();
       sharedObserver?.unobserve(root);
       entryByElement.delete(root);
       cardRegistry.delete(entry);

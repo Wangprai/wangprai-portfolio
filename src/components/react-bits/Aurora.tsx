@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, type CSSProperties } from 'react';
+import { createRectCache } from '../../utils/rectCache';
 
 export interface AuroraProps {
   colorStops?: string[];
@@ -411,7 +412,10 @@ const Aurora = ({
     };
 
     const view = { width: 0, height: 0, ratio: 0 };
-    const pointer = { x: 0, y: 0, inside: false };
+    // Pointer events only record the latest client position; it is resolved
+    // against a cached rect once per frame (no layout reads in the handler).
+    const pointer = { x: 0, y: 0, inside: false, clientX: 0, clientY: 0, pending: false };
+    const rects = createRectCache(container);
     const state = {
       clock: 0,
       px: 0,
@@ -463,6 +467,7 @@ const Aurora = ({
         return;
       }
       state.clock += dt * s.speed;
+      resolvePointer();
       const engaged = s.mouseInteraction && pointer.inside;
       const follow = 1 - Math.exp(-dt / 0.6);
       if (engaged) {
@@ -515,26 +520,39 @@ const Aurora = ({
       });
     };
 
-    const onPointerMove = (event: PointerEvent) => {
+    function resolvePointer() {
+      if (!pointer.pending) return;
+      pointer.pending = false;
       const s = settingsRef.current;
-      if (!visible || !s.mouseInteraction || reduce) return;
-      const rect = container.getBoundingClientRect();
-      pointer.x = event.clientX - rect.left;
-      pointer.y = event.clientY - rect.top;
+      const rect = rects.get();
+      pointer.x = pointer.clientX - rect.left;
+      pointer.y = pointer.clientY - rect.top;
       const wasInside = pointer.inside;
       pointer.inside = pointer.x >= 0 && pointer.y >= 0 && pointer.x <= rect.width && pointer.y <= rect.height;
       if (pointer.inside && !wasInside) {
         state.px = (pointer.x - rect.width / 2) / Math.max(1, rect.height);
         state.py = s.flip ? 1 - pointer.y / Math.max(1, rect.height) : pointer.y / Math.max(1, rect.height);
       }
+    }
+
+    const onPointerMove = (event: PointerEvent) => {
+      const s = settingsRef.current;
+      if (!visible || !s.mouseInteraction || reduce) return;
+      pointer.clientX = event.clientX;
+      pointer.clientY = event.clientY;
+      pointer.pending = true;
       if (!s.paused) wake();
     };
 
     const onPointerUp = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse') pointer.inside = false;
+      if (event.pointerType !== 'mouse') {
+        pointer.pending = false;
+        pointer.inside = false;
+      }
     };
 
     const onPointerLeave = () => {
+      pointer.pending = false;
       pointer.inside = false;
     };
 
@@ -584,6 +602,7 @@ const Aurora = ({
       cancelAnimationFrame(raf);
       cancelAnimationFrame(resizeRaf);
       wakeRef.current = null;
+      rects.dispose();
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener('pointermove', onPointerMove);

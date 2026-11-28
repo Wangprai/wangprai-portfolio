@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from "react";
+import { createRectCache } from "../../utils/rectCache";
 
 /**
  * ParticlesField — dependency-free adaptation of React Bits "Particles"
@@ -67,7 +68,20 @@ const ParticlesField = ({
     let raf = 0;
     let resizeRaf = 0;
     let visible = typeof IntersectionObserver === "undefined";
-    const pointer = { x: -9999, y: -9999, active: false };
+    // Pointer events only record the latest client position; it is resolved
+    // against a cached rect once per frame (no layout reads in the handler).
+    const pointer = { x: -9999, y: -9999, active: false, clientX: 0, clientY: 0, pending: false };
+    const rects = createRectCache(container);
+
+    const resolvePointer = () => {
+      if (!pointer.pending) return;
+      pointer.pending = false;
+      const rect = rects.get();
+      pointer.x = pointer.clientX - rect.left;
+      pointer.y = pointer.clientY - rect.top;
+      pointer.active =
+        pointer.x >= 0 && pointer.y >= 0 && pointer.x <= rect.width && pointer.y <= rect.height;
+    };
     let particles: Particle[] = [];
     const buckets: number[][] = Array.from({ length: LINE_BUCKETS }, () => []);
 
@@ -177,6 +191,7 @@ const ParticlesField = ({
     const tick = () => {
       raf = 0;
       if (!visible || document.hidden) return;
+      resolvePointer();
       drawFrame(!reduced);
       if (!reduced) {
         raf = requestAnimationFrame(tick);
@@ -219,14 +234,13 @@ const ParticlesField = ({
 
     const onPointerMove = (event: PointerEvent) => {
       if (!visible || event.pointerType !== "mouse") return;
-      const rect = container.getBoundingClientRect();
-      pointer.x = event.clientX - rect.left;
-      pointer.y = event.clientY - rect.top;
-      pointer.active =
-        pointer.x >= 0 && pointer.y >= 0 && pointer.x <= rect.width && pointer.y <= rect.height;
+      pointer.clientX = event.clientX;
+      pointer.clientY = event.clientY;
+      pointer.pending = true;
     };
 
     const onPointerLeave = () => {
+      pointer.pending = false;
       pointer.active = false;
     };
 
@@ -278,6 +292,7 @@ const ParticlesField = ({
       cancelAnimationFrame(raf);
       cancelAnimationFrame(resizeRaf);
       redrawRef.current = null;
+      rects.dispose();
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener("pointermove", onPointerMove);

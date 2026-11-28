@@ -1,4 +1,5 @@
 import { useEffect, useRef, type HTMLAttributes, type ReactNode } from "react";
+import { createRectCache } from "../../utils/rectCache";
 
 /**
  * TiltedCard — dependency-free adaptation of React Bits "Tilted Card"
@@ -52,8 +53,31 @@ const TiltedCard = ({
       glare.style.background = `radial-gradient(circle 280px at ${current.gx.toFixed(1)}% ${current.gy.toFixed(1)}%, hsl(270 100% 88% / 0.9), transparent 72%)`;
     };
 
+    // Pointer moves only record the latest client position; the tilt target is
+    // derived from it once per frame using a cached rect.
+    const rects = createRectCache(outer);
+    const pendingPointer = { x: 0, y: 0, active: false };
+
+    const applyPendingPointer = () => {
+      if (!pendingPointer.active) return;
+      pendingPointer.active = false;
+      const rect = rects.get();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      const px = Math.min(1, Math.max(0, (pendingPointer.x - rect.left) / rect.width));
+      const py = Math.min(1, Math.max(0, (pendingPointer.y - rect.top) / rect.height));
+
+      target.rx = (0.5 - py) * maxTilt * 2;
+      target.ry = (px - 0.5) * maxTilt * 2;
+      target.s = scaleOnHover;
+      target.gx = px * 100;
+      target.gy = py * 100;
+      target.ga = glareOpacity;
+    };
+
     const tick = (now: number) => {
       raf = 0;
+      applyPendingPointer();
       const dt = last ? Math.min(0.05, Math.max(0.001, (now - last) / 1000)) : 1 / 60;
       last = now;
       const k = 1 - Math.exp(-dt * 12);
@@ -91,22 +115,14 @@ const TiltedCard = ({
 
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
-      const rect = outer.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return;
-
-      const px = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-      const py = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
-
-      target.rx = (0.5 - py) * maxTilt * 2;
-      target.ry = (px - 0.5) * maxTilt * 2;
-      target.s = scaleOnHover;
-      target.gx = px * 100;
-      target.gy = py * 100;
-      target.ga = glareOpacity;
+      pendingPointer.x = event.clientX;
+      pendingPointer.y = event.clientY;
+      pendingPointer.active = true;
       wake();
     };
 
     const onPointerLeave = () => {
+      pendingPointer.active = false;
       target.rx = 0;
       target.ry = 0;
       target.s = 1;
@@ -119,6 +135,7 @@ const TiltedCard = ({
 
     return () => {
       cancelAnimationFrame(raf);
+      rects.dispose();
       outer.removeEventListener("pointermove", onPointerMove);
       outer.removeEventListener("pointerleave", onPointerLeave);
       inner.style.transform = "";

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type HTMLAttributes, type ReactNode } from 'react';
+import { createRectCache, type RectCache } from '../../utils/rectCache';
 
 export type MagnetAxis = 'both' | 'x' | 'y';
 
@@ -45,6 +46,8 @@ type Settings = {
 
 type Entry = {
   wrapper: HTMLDivElement;
+  /** Shared by arbitrate() and the entry's own frame, so the rect is read at most once per frame. */
+  rect: RectCache;
   settings: { current: Settings };
   reduce: boolean;
   wake: () => void;
@@ -83,7 +86,7 @@ const arbitrate = () => {
     const s = entry.settings.current;
     let near: { dx: number; dy: number; outside: number } | null = null;
     if (field.pointer && !s.disabled && !entry.reduce && entry.visible) {
-      near = reach(entry.wrapper.getBoundingClientRect(), field.pointer);
+      near = reach(entry.rect.get(), field.pointer);
       if (near.outside > s.padding) near = null;
     }
     if (!s.exclusive) {
@@ -269,7 +272,7 @@ const Magnet = ({
       const target: Motion = { x: 0, y: 0, tiltX: 0, tiltY: 0, scale: 1 };
       if (s.disabled || entry.reduce || !field.pointer || !entry.visible) return { target, engaged: false };
       if (s.exclusive && field.owner !== entry) return { target, engaged: false };
-      const rect = wrapper.getBoundingClientRect();
+      const rect = entry.rect.get();
       const { dx, dy, outside } = reach(rect, field.pointer);
       if (outside > s.padding) return { target, engaged: false };
       const pull = s.padding > 0 ? 1 - smoothstep(s.padding * 0.5, s.padding, outside) : 1;
@@ -333,6 +336,7 @@ const Magnet = ({
 
     const entry: Entry = {
       wrapper,
+      rect: createRectCache(wrapper),
       settings: settingsRef,
       reduce: motionQuery?.matches ?? false,
       wake,
@@ -363,6 +367,7 @@ const Magnet = ({
 
     return () => {
       cancelAnimationFrame(raf);
+      entry.rect.dispose();
       wakeRef.current = null;
       motionQuery?.removeEventListener?.('change', onMotionChange);
       sharedObserver?.unobserve(wrapper);

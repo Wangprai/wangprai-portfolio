@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useRef, type CSSProperties, type HTMLAttributes } from 'react';
 import './GradientASCII.css';
+import { createRectCache } from '../../utils/rectCache';
 
 export type GradientASCIIShape = 'horizon' | 'pinch' | 'rise' | 'eclipse';
 
@@ -643,6 +644,7 @@ const GradientASCII = ({
     const trailData = new Float32Array(MAX_TRAIL * 4);
     const trail: Point[] = [];
     const pointer = { x: 0, y: 0, inside: false };
+    const rects = createRectCache(container);
     let atlas: Atlas | null = null;
     let atlasKey = '';
     let paletteKey = '';
@@ -918,6 +920,7 @@ const GradientASCII = ({
         grainClock = 0;
         frameSeed = (frameSeed + 1) % 97;
       }
+      applyPendingMove();
       updateInput(dt);
       draw();
       const busy = !reduce || introClock < 1 || clicks.length > 0 || trail.length > 0;
@@ -931,20 +934,35 @@ const GradientASCII = ({
       }
     }
 
-    const locate = (event: PointerEvent) => {
-      const rect = container.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / Math.max(1, rect.width);
-      const y = 1 - (event.clientY - rect.top) / Math.max(1, rect.height);
+    const locate = (clientX: number, clientY: number) => {
+      const rect = rects.get();
+      const x = (clientX - rect.left) / Math.max(1, rect.width);
+      const y = 1 - (clientY - rect.top) / Math.max(1, rect.height);
       const aspect = rect.width / Math.max(1, rect.height);
       pointer.inside = x >= 0 && x <= 1 && y >= 0 && y <= 1;
       pointer.x = (x - 0.5) * aspect;
       pointer.y = y - 0.5;
     };
 
+    // Pointer moves only record the latest client position; the trail is
+    // extended from it once per frame, before the trail ages (see frame()).
+    const pendingMove = { x: 0, y: 0, active: false };
+
     const onPointerMove = (event: PointerEvent) => {
       const s = settingsRef.current;
       if (!visible || !s.mouseInteraction || reduce) return;
-      locate(event);
+      pendingMove.x = event.clientX;
+      pendingMove.y = event.clientY;
+      pendingMove.active = true;
+      wake();
+    };
+
+    const applyPendingMove = () => {
+      if (!pendingMove.active) return;
+      pendingMove.active = false;
+      const s = settingsRef.current;
+      if (!s.mouseInteraction || reduce) return;
+      locate(pendingMove.x, pendingMove.y);
       if (!pointer.inside) return;
       const head = trail[0];
       const gap = head ? Math.hypot(pointer.x - head.x, pointer.y - head.y) : Infinity;
@@ -958,13 +976,14 @@ const GradientASCII = ({
       }
       trail.unshift({ x: pointer.x, y: pointer.y, age: 0 });
       trail.length = Math.min(trail.length, MAX_TRAIL);
-      wake();
+      // No wake() here: this runs inside frame(), which keeps looping while
+      // the trail is non-empty.
     };
 
     const onPointerDown = (event: PointerEvent) => {
       const s = settingsRef.current;
       if (!visible || !s.clickEffect || reduce) return;
-      locate(event);
+      locate(event.clientX, event.clientY);
       if (!pointer.inside) return;
       clicks.unshift({ x: pointer.x, y: pointer.y, age: 0 });
       if (clicks.length > MAX_CLICKS) clicks.pop();
@@ -1023,6 +1042,7 @@ const GradientASCII = ({
       cancelAnimationFrame(raf);
       cancelAnimationFrame(resizeRaf);
       wakeRef.current = null;
+      rects.dispose();
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener('pointermove', onPointerMove);
