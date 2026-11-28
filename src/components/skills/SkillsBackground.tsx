@@ -24,9 +24,10 @@ const getTargetDpr = (coarse: boolean) =>
  * Atmospheric Gradient ASCII background for the Skills section only.
  * - Feathers softly upward across the Experience -> Skills seam and fades to
  *   transparent along all outer edges so there is no detached box boundary.
- * - Preloads once the section is within 900px of the viewport so shaders are
- *   ready before scroll-in, while GradientASCII's own IntersectionObserver
- *   pauses the WebGL loop whenever offscreen.
+ * - Mounts during idle time after page load (or earlier, once the section is
+ *   within 900px of the viewport) so shaders are compiled before scroll-in,
+ *   while GradientASCII's own IntersectionObserver pauses the WebGL loop
+ *   whenever offscreen.
  * - Cross-fades from a subtle static fallback to the live WebGL canvas once
  *   the first frame draws, and keeps the fallback if WebGL2 fails.
  * - Non-interactive (`pointer-events-none`, `aria-hidden`) so clicks, hover
@@ -58,6 +59,30 @@ const SkillsBackground = ({ theme }: { theme: "dark" | "light" }) => {
     observer.observe(host);
     return () => observer.disconnect();
   }, []);
+
+  // Warm-up: mount once the page has loaded and the main thread is idle, so
+  // the WebGL shaders compile before the user scrolls here rather than mid-
+  // scroll. While offscreen, GradientASCII only draws its first frame and then
+  // stays paused, so mounting early costs no ongoing work.
+  useEffect(() => {
+    if (shouldMount) return;
+    let idleId = 0;
+    let timeoutId = 0;
+    const schedule = () => {
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(() => setShouldMount(true), { timeout: 4000 });
+      } else {
+        timeoutId = window.setTimeout(() => setShouldMount(true), 1500);
+      }
+    };
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+    return () => {
+      window.removeEventListener("load", schedule);
+      if (idleId) window.cancelIdleCallback(idleId);
+      window.clearTimeout(timeoutId);
+    };
+  }, [shouldMount]);
 
   const handleReady = useCallback(() => {
     setIsReady(true);
