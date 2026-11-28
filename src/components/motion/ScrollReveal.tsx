@@ -21,7 +21,9 @@ interface ScrollRevealProps {
 
 const HIDDEN: Record<RevealVariant, string> = {
   up: "opacity-0 translate-y-4",
-  blur: "opacity-0 translate-y-2 blur-[6px]",
+  // No filter: this variant wraps large blocks (the Skills grid, the Education
+  // card), where animating `filter: blur()` re-filters the whole block each frame.
+  blur: "opacity-0 translate-y-2",
   scale: "opacity-0 scale-[0.96]",
   left: "opacity-0 -translate-x-5",
   right: "opacity-0 translate-x-5",
@@ -91,7 +93,7 @@ const ScrollReveal = ({
     <div
       ref={ref}
       data-reveal={visible ? "shown" : "hidden"}
-      className={`transition-[opacity,translate,scale,filter] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`transition-[opacity,translate,scale] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         visible ? "opacity-100" : `${HIDDEN[variant]} will-change-[opacity,translate]`
       }${className ? ` ${className}` : ""}`}
       style={delayMs > 0 ? { transitionDelay: `${delayMs}ms` } : undefined}

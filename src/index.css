@@ -400,8 +400,22 @@ html[lang="en"] body {
  * React Bits & Futuristic Motion Primitives
  * ------------------------------------------------------------------ */
 
-/* Hero staggered entrance — immediate first paint, crisp blur-rise */
+/* Hero staggered entrance — immediate first paint, crisp rise.
+ * The blur is reserved for headings (`.hero-enter-blur`): animating `filter`
+ * on large blocks such as the console card re-filters the whole subtree
+ * every frame. */
 @keyframes enter-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes enter-rise-blur {
   0% {
     opacity: 0;
     transform: translateY(16px);
@@ -417,6 +431,10 @@ html[lang="en"] body {
 .hero-enter {
   animation: enter-rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: var(--d, 0ms);
+}
+
+.hero-enter.hero-enter-blur {
+  animation-name: enter-rise-blur;
 }
 
 /* BlurText (React Bits "Blur Text" adaptation) */

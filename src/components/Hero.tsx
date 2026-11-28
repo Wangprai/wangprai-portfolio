@@ -213,7 +213,7 @@ const Hero = () => {
           />
 
           {/* Primary Software Engineer Role with Flowing Metallic Sheen */}
-          <div className="hero-enter flex flex-wrap items-center gap-3 mb-4" style={enter(240)}>
+          <div className="hero-enter hero-enter-blur flex flex-wrap items-center gap-3 mb-4" style={enter(240)}>
             <ShinyText
               as="p"
               durationSeconds={5.2}
