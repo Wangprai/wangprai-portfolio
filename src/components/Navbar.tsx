@@ -136,7 +136,7 @@ const Navbar = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-5 pt-2.5 sm:pt-3 pointer-events-none">
       <div
-        className={`pointer-events-auto relative mx-auto max-w-6xl rounded-2xl transition-all duration-300 overflow-hidden ${
+        className={`pointer-events-auto relative mx-auto max-w-6xl rounded-2xl transition-[color,background-color,border-color,box-shadow] duration-300 overflow-hidden ${
           scrolled
             ? "bg-background/80 backdrop-blur-2xl border border-primary/25 shadow-[0_14px_40px_-18px_hsl(263_75%_6%/0.75)] dark:shadow-[0_16px_44px_-16px_hsl(263_90%_4%/0.88)]"
             : "bg-background/40 backdrop-blur-md border border-border/40"
@@ -170,7 +170,7 @@ const Navbar = () => {
                   key={item.href}
                   href={item.href}
                   aria-current={isActive ? "location" : undefined}
-                  className={`group/nav relative px-2.5 xl:px-3 py-1.5 text-[13px] font-medium rounded-lg whitespace-nowrap transition-all duration-200 ${
+                  className={`group/nav relative px-2.5 xl:px-3 py-1.5 text-[13px] font-medium rounded-lg whitespace-nowrap transition-[color,background-color,border-color,box-shadow] duration-200 ${
                     isActive
                       ? "text-primary bg-primary/14 shadow-[inset_0_1px_0_hsl(var(--primary)/0.35)]"
                       : "text-muted-foreground hover:text-foreground hover:bg-card/70"
@@ -199,7 +199,7 @@ const Navbar = () => {
               aria-pressed={cursorEnabled}
               aria-label={cursorEnabled ? t.nav.disableCursor : t.nav.enableCursor}
               title={cursorEnabled ? t.nav.disableCursor : t.nav.enableCursor}
-              className={`hidden [@media(hover:hover)_and_(pointer:fine)]:inline-flex items-center justify-center w-9 h-9 rounded-xl border transition-all cursor-pointer ${
+              className={`hidden [@media(hover:hover)_and_(pointer:fine)]:inline-flex items-center justify-center w-9 h-9 rounded-xl border transition-[color,background-color,border-color,box-shadow] cursor-pointer ${
                 cursorEnabled
                   ? "border-primary/55 bg-primary/10 text-primary"
                   : "border-border/80 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/55 hover:bg-primary/10"
@@ -213,7 +213,7 @@ const Navbar = () => {
               onClick={toggleTheme}
               aria-label={themeAriaLabel}
               title={themeAriaLabel}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-border/80 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/55 hover:bg-primary/10 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-border/80 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/55 hover:bg-primary/10 transition-[color,background-color,border-color,box-shadow] cursor-pointer"
             >
               <span key={theme} className="inline-flex animate-icon-swap">
                 {theme === "dark" ? (
@@ -229,7 +229,7 @@ const Navbar = () => {
               onClick={toggleLang}
               aria-label={t.nav.switchLangLabel}
               title={t.nav.switchLangLabel}
-              className="group/lang inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-border/80 bg-card/70 font-mono text-xs font-semibold text-muted-foreground hover:text-primary hover:border-primary/55 hover:bg-primary/10 transition-all cursor-pointer"
+              className="group/lang inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-border/80 bg-card/70 font-mono text-xs font-semibold text-muted-foreground hover:text-primary hover:border-primary/55 hover:bg-primary/10 transition-[color,background-color,border-color,box-shadow] cursor-pointer"
             >
               <Globe
                 size={14}
@@ -243,7 +243,7 @@ const Navbar = () => {
               href="/docs/Wangprai_Resume-SE.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="group/res relative overflow-hidden inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl border border-primary/60 bg-primary/14 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground shadow-[0_0_20px_-8px_hsl(var(--primary)/0.6)] transition-all whitespace-nowrap"
+              className="group/res relative overflow-hidden inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl border border-primary/60 bg-primary/14 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground shadow-[0_0_20px_-8px_hsl(var(--primary)/0.6)] transition-[color,background-color,border-color,box-shadow] whitespace-nowrap"
             >
               <FileText
                 size={14}
